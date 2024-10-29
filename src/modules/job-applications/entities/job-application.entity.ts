@@ -28,6 +28,13 @@ export class JobApplication extends BaseEntity {
   @Column({ type: 'date', nullable: true })
   deadline: string | null;
 
+  @Column({
+    name: 'status_changed_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  statusChangedAt: string;
+
   @ManyToOne(() => BoardColumn, (column) => column.jobApplications, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'column_id' })
   column: BoardColumn;

@@ -41,4 +41,7 @@ export class JobApplicationDto extends BaseDto {
 
   @ApiProperty({ nullable: true })
   company: CompanyDto | null;
+
+  @ApiProperty()
+  statusChangedAt: string;
 }

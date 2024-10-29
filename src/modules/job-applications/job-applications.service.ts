@@ -106,12 +106,14 @@ export class JobApplicationsService {
     // Updates the rest fields
     Object.assign(jobApplication, dto);
 
+    jobApplication.statusChangedAt = new Date().toISOString();
+
     return this.jobApplicationsRepository.save(jobApplication);
   }
 
   async delete(id: string, userId: string) {
     const jobApplication = await this.findOne(id, userId);
-    return this.jobApplicationsRepository.delete(jobApplication);
+    return this.jobApplicationsRepository.delete({ id: jobApplication.id });
   }
 
   async attachContact(id: string, contactId: string, userId: string) {
