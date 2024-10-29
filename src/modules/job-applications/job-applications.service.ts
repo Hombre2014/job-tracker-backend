@@ -68,7 +68,6 @@ export class JobApplicationsService {
     }
 
     if (dto.notes) {
-      console.log('NOTES');
       jobApplicationEntity.notes = await Promise.all(
         dto.notes.map(async (noteDto) => {
           noteDto.jobApplicationId = jobApplication.id;
@@ -79,7 +78,6 @@ export class JobApplicationsService {
     }
 
     if (dto.company) {
-      console.log('COMPANY');
       jobApplicationEntity.company = await this.companiesRepository.save(dto.company);
     }
 
