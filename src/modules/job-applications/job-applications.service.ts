@@ -100,11 +100,11 @@ export class JobApplicationsService {
         throw new BadRequestException(`Board column with '${dto.columnId}' id doesn't exists`);
       }
       jobApplication.column.id = dto.columnId;
+
+      jobApplication.statusChangedAt = new Date().toISOString();
     }
     // Updates the rest fields
     Object.assign(jobApplication, dto);
-
-    jobApplication.statusChangedAt = new Date().toISOString();
 
     return this.jobApplicationsRepository.save(jobApplication);
   }
