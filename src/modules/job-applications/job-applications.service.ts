@@ -51,6 +51,13 @@ export class JobApplicationsService {
     return jobApplicationEntities;
   }
 
+  async findOneById(id: string, userId: string): Promise<JobApplication> {
+    return this.jobApplicationsRepository.findOneOrFail({
+      where: { id, column: { board: { user: { id: userId } } } },
+      relations: { notes: true, contacts: true, company: true },
+    });
+  }
+
   async create(dto: CreateJobApplicationDto, userId: string): Promise<JobApplication> {
     await this.validateBoardColumn(dto.columnId, userId);
 
@@ -81,7 +88,9 @@ export class JobApplicationsService {
       jobApplicationEntity.company = await this.companiesRepository.save(dto.company);
     }
 
-    return this.jobApplicationsRepository.save(jobApplicationEntity);
+    const { id } = await this.jobApplicationsRepository.save(jobApplicationEntity);
+
+    return await this.findOneById(id, userId);
   }
 
   async update(id: string, dto: UpdateJobApplicationDto, userId: string): Promise<JobApplication> {
