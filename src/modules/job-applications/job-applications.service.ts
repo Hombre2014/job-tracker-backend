@@ -54,7 +54,7 @@ export class JobApplicationsService {
   async findOneById(id: string, userId: string): Promise<JobApplication> {
     return this.jobApplicationsRepository.findOneOrFail({
       where: { id, column: { board: { user: { id: userId } } } },
-      relations: { notes: true, contacts: true, company: true },
+      relations: { column: true, notes: true, contacts: true, company: true },
     });
   }
 
@@ -97,10 +97,7 @@ export class JobApplicationsService {
     // Checks whether jobApplication exists for the current user
     await this.findOne(id, userId);
 
-    const jobApplication = await this.jobApplicationsRepository.findOne({
-      where: { id },
-      relations: { column: true },
-    });
+    const jobApplication = await this.findOneById(id, userId);
 
     // Updates the column_id field
     if (dto.columnId && jobApplication.column.id !== dto.columnId) {
