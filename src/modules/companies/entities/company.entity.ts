@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/entities/base.entity';
+import { BaseEntity } from '../../../entities/base.entity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { JobApplication } from '../../job-applications/entities/job-application.entity';
 
