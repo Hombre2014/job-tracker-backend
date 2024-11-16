@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { ContactPhoneDto } from './contact-method/contact-phone.dto';
 import { ContactEmailDto } from './contact-method/contact-email.dto';
@@ -6,67 +5,54 @@ import { Type } from 'class-transformer';
 
 export class CreateContactDto {
   @IsString()
-  @ApiProperty()
   firstName: string;
 
-  @ApiProperty()
   @IsString()
   lastName: string;
 
-  @ApiProperty()
   @IsString()
   jobTitle: string;
 
-  @ApiProperty({ type: 'string', format: 'uuid' })
   @IsUUID()
   boardId: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  companyName: string;
+  companyName?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  companyLocation: string;
+  companyLocation?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  twitterUrl: string;
+  twitterUrl?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  facebookUrl: string;
+  facebookUrl?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  linkedinUrl: string;
+  linkedinUrl?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  githubUrl: string;
+  githubUrl?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true })
-  comment: string;
+  comment?: string;
 
-  @ApiProperty({ nullable: true })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ContactPhoneDto)
-  phones: ContactPhoneDto[];
+  phones?: ContactPhoneDto[];
 
-  @ApiProperty({ nullable: true })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ContactEmailDto)
-  emails: ContactEmailDto[];
+  emails?: ContactEmailDto[];
 }

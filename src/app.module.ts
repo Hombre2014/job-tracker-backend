@@ -2,16 +2,16 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
 import { UsersModule } from './modules/users/users.module';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_PIPE } from '@nestjs/core';
 import { getDataSourceOptions } from './database.config';
 import { BoardsModule } from './modules/boards/boards.module';
 import { BoardColumnsModule } from './modules/board-columns/board-columns.module';
 import { JobApplicationsModule } from './modules/job-applications/job-applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailSenderModule } from './modules/email-sender/email-sender.module';
-import { HttpExceptionFilter } from './exceptions/http-exception.filter';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { JobApplicationNotesModule } from './modules/job-application-notes/job-application-notes.module';
+import { CompaniesModule } from './modules/companies/companies.module';
 
 @Module({
   imports: [
@@ -27,6 +27,7 @@ import { JobApplicationNotesModule } from './modules/job-application-notes/job-a
     EmailSenderModule,
     ContactsModule,
     JobApplicationNotesModule,
+    CompaniesModule,
   ],
   controllers: [],
   providers: [
@@ -35,10 +36,6 @@ import { JobApplicationNotesModule } from './modules/job-application-notes/job-a
       useValue: new ValidationPipe({
         whitelist: true,
       }),
-    },
-    {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
     },
   ],
 })

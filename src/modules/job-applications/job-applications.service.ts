@@ -8,6 +8,12 @@ import { UpdateJobApplicationDto } from './dtos/update-job-application.dto';
 import { Board } from '../boards/entities/board.entity';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
 import { ArgumentInvalidException } from '../../exceptions/argument-invalid.exceptions';
+import { Contact } from '../contacts/entities/contact.entity';
+import { Company } from '../companies/entities/company.entity';
+import { JobApplicationNote } from '../job-application-notes/entities/job-application-note.entity';
+import { ContactsService } from '../contacts/contacts.service';
+import * as _ from 'lodash';
+import { JobApplicationNotesService } from '../job-application-notes/job-application-notes.service';
 
 @Injectable()
 export class JobApplicationsService {
@@ -16,6 +22,14 @@ export class JobApplicationsService {
     private readonly jobApplicationsRepository: Repository<JobApplication>,
     @InjectRepository(BoardColumn)
     private readonly boardColumnsRepository: Repository<BoardColumn>,
+    @InjectRepository(Contact)
+    private readonly contactsRepository: Repository<Contact>,
+    private readonly contactsService: ContactsService,
+    @InjectRepository(Company)
+    private readonly companiesRepository: Repository<Company>,
+    @InjectRepository(JobApplicationNote)
+    private readonly jobApplicationNotesRepository: Repository<JobApplicationNote>,
+    private readonly jobApplicationNotesService: JobApplicationNotesService,
   ) {}
 
   async findBy(columnId: string, userId: string): Promise<JobApplication[]> {
@@ -30,34 +44,60 @@ export class JobApplicationsService {
 
     const jobApplicationEntities = await this.jobApplicationsRepository.find({
       where: { column: { id: columnId } },
-      relations: { notes: true },
+      relations: { notes: true, contacts: true, company: true },
       order: { notes: { order: 'ASC' } },
     });
 
     return jobApplicationEntities;
   }
 
+  async findOneById(id: string, userId: string): Promise<JobApplication> {
+    return this.jobApplicationsRepository.findOneOrFail({
+      where: { id, column: { board: { user: { id: userId } } } },
+      relations: { column: true, notes: true, contacts: true, company: true },
+    });
+  }
+
   async create(dto: CreateJobApplicationDto, userId: string): Promise<JobApplication> {
     await this.validateBoardColumn(dto.columnId, userId);
 
     const jobApplication = this.jobApplicationsRepository.create({
-      title: dto.title,
-      companyName: dto.companyName,
-      description: dto.description,
+      ..._.omit(dto, ['contacts', 'notes', 'company']),
       column: { id: dto.columnId },
     });
 
-    return await this.jobApplicationsRepository.save(jobApplication);
+    const jobApplicationEntity = await this.jobApplicationsRepository.save(jobApplication);
+
+    if (dto.contacts) {
+      jobApplicationEntity.contacts = await Promise.all(
+        dto.contacts.map((contactDto) => this.contactsService.create(userId, contactDto)),
+      );
+    }
+
+    if (dto.notes) {
+      jobApplicationEntity.notes = await Promise.all(
+        dto.notes.map(async (noteDto) => {
+          noteDto.jobApplicationId = jobApplication.id;
+          const noteMapped = await this.jobApplicationNotesService.create(noteDto, userId);
+          return this.jobApplicationNotesRepository.findOneBy({ id: noteMapped.id });
+        }),
+      );
+    }
+
+    if (dto.company) {
+      jobApplicationEntity.company = await this.companiesRepository.save(dto.company);
+    }
+
+    const { id } = await this.jobApplicationsRepository.save(jobApplicationEntity);
+
+    return await this.findOneById(id, userId);
   }
 
   async update(id: string, dto: UpdateJobApplicationDto, userId: string): Promise<JobApplication> {
     // Checks whether jobApplication exists for the current user
     await this.findOne(id, userId);
 
-    const jobApplication = await this.jobApplicationsRepository.findOne({
-      where: { id },
-      relations: { column: true },
-    });
+    const jobApplication = await this.findOneById(id, userId);
 
     // Updates the column_id field
     if (dto.columnId && jobApplication.column.id !== dto.columnId) {
@@ -66,6 +106,8 @@ export class JobApplicationsService {
         throw new BadRequestException(`Board column with '${dto.columnId}' id doesn't exists`);
       }
       jobApplication.column.id = dto.columnId;
+
+      jobApplication.statusChangedAt = new Date().toISOString();
     }
     // Updates the rest fields
     Object.assign(jobApplication, dto);
@@ -75,7 +117,44 @@ export class JobApplicationsService {
 
   async delete(id: string, userId: string) {
     const jobApplication = await this.findOne(id, userId);
-    return this.jobApplicationsRepository.delete(jobApplication);
+    return this.jobApplicationsRepository.delete({ id: jobApplication.id });
+  }
+
+  async attachContact(id: string, contactId: string, userId: string) {
+    const jobApplication = await this.jobApplicationsRepository.findOneByOrFail({
+      id,
+      column: { board: { user: { id: userId } } },
+    });
+    const contact = await this.contactsRepository.findOneByOrFail({
+      id: contactId,
+      board: { user: { id: userId } },
+    });
+
+    const containsContact = jobApplication.contacts.filter(({ id }) => id === contactId).length > 0;
+
+    if (!containsContact) {
+      jobApplication.contacts.push(contact);
+
+      await this.jobApplicationsRepository.save(jobApplication);
+    }
+  }
+
+  async attachCompany(id: string, companyId: string, userId: string) {
+    const jobApplication = await this.jobApplicationsRepository.findOneByOrFail({
+      id,
+      column: { board: { user: { id: userId } } },
+    });
+    const company = await this.companiesRepository.findOneByOrFail({
+      id: companyId,
+    });
+
+    if (jobApplication.company) {
+      await this.companiesRepository.delete(jobApplication.company);
+    }
+
+    jobApplication.company = company;
+
+    await this.jobApplicationsRepository.save(jobApplication);
   }
 
   private async findOne(jobId: string, userId: string): Promise<JobApplication> {

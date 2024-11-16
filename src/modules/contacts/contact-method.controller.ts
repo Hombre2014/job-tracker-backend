@@ -9,7 +9,6 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
 import { AuthUser } from '../auth/user.decorator';
 import { ContactMethodsService } from './contact-methods.service';
@@ -20,7 +19,6 @@ import { ContactEmailDto } from './dtos/contact-method/contact-email.dto';
 import { ContactPhoneDto } from './dtos/contact-method/contact-phone.dto';
 import { CreateContactEmailDto } from './dtos/contact-method/create-contact-email.dto';
 
-@ApiTags('contacts')
 @Controller('contacts')
 export class ContactMethodsController {
   constructor(
@@ -30,17 +28,6 @@ export class ContactMethodsController {
   ) {}
 
   @Get('/contact-method/email')
-  @ApiOperation({ summary: 'Gets all email contact methods from a contact' })
-  @ApiParam({ name: 'contactId', required: true })
-  @ApiResponse({
-    status: 200,
-    description: "Contact's email added",
-    type: [ContactEmailDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async getContactMethodEmail(
     @Query('contactId', ParseUUIDPipe) contactId: string,
     @AuthUser() user: AuthUserDto,
@@ -50,17 +37,6 @@ export class ContactMethodsController {
   }
 
   @Get('/contact-method/phone')
-  @ApiOperation({ summary: 'Gets all phone contact methods from a contact' })
-  @ApiParam({ name: 'contactId', required: true })
-  @ApiResponse({
-    status: 200,
-    description: "Contact's phone added",
-    type: [ContactPhoneDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async getContactMethodPhone(
     @Query('contactId', ParseUUIDPipe) contactId: string,
     @AuthUser() user: AuthUserDto,
@@ -70,16 +46,6 @@ export class ContactMethodsController {
   }
 
   @Post('/contact-method/email')
-  @ApiOperation({ summary: 'Adds email contact methods from a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's email added",
-    type: [ContactEmailDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async createContactMethodEmail(
     @Body() contactEmailDto: CreateContactEmailDto,
     @AuthUser() user: AuthUserDto,
@@ -92,16 +58,6 @@ export class ContactMethodsController {
   }
 
   @Post('/contact-method/phone')
-  @ApiOperation({ summary: 'Adds phone contact methods for a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's phone added",
-    type: [ContactPhoneDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async createContactMethodPhone(
     @Body() contactPhoneDto: CreateContactPhoneDto,
     @AuthUser() user: AuthUserDto,
@@ -114,16 +70,6 @@ export class ContactMethodsController {
   }
 
   @Put('/contact-method/email')
-  @ApiOperation({ summary: 'Updates email contact methods from a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's email updated",
-    type: [ContactEmailDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async updateContactMethodEmail(
     @Body() contactEmailDto: ContactEmailDto,
     @AuthUser() user: AuthUserDto,
@@ -136,16 +82,6 @@ export class ContactMethodsController {
   }
 
   @Put('/contact-method/phone')
-  @ApiOperation({ summary: 'Updates phone contact methods for a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's phone updated",
-    type: [ContactPhoneDto],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async updateContactMethodPhone(
     @Body() contactPhoneDto: ContactPhoneDto,
     @AuthUser() user: AuthUserDto,
@@ -158,15 +94,6 @@ export class ContactMethodsController {
   }
 
   @Delete('/contact-method/email/:id')
-  @ApiOperation({ summary: 'Deletes email contact methods from a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's email updated",
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async deleteContactMethodEmail(
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() user: AuthUserDto,
@@ -175,15 +102,6 @@ export class ContactMethodsController {
   }
 
   @Delete('/contact-method/phone/:id')
-  @ApiOperation({ summary: 'Deletes phone contact methods for a contact' })
-  @ApiResponse({
-    status: 201,
-    description: "Contact's phone updated",
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Validation error',
-  })
   async deleteContactMethodPhone(
     @Param('id', ParseUUIDPipe) id: string,
     @AuthUser() user: AuthUserDto,

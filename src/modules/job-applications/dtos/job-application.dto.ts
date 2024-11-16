@@ -1,20 +1,33 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { BaseDto } from '../../../dtos/base.dto';
 import { JobApplicationNoteDto } from 'src/modules/job-application-notes/dtos/job-application-note.dto';
+import { BoardColumnDto } from '../../board-columns/dtos/board-column.dto';
+import { ContactDto } from '../../contacts/dtos/contact.dto';
+import { CompanyDto } from '../../companies/dtos/company.dto';
 
 export class JobApplicationDto extends BaseDto {
-  @ApiProperty()
   title: string;
 
-  @ApiProperty()
-  companyName: string;
-
-  @ApiProperty({ nullable: true })
   description: string | null;
 
-  @ApiProperty({ type: 'string', format: 'uuid' })
   columnId: string;
 
-  @ApiProperty({ nullable: true })
+  postUrl: string;
+
+  salary: string;
+
+  location: string;
+
+  color: string;
+
+  deadline: string;
+
   notes: JobApplicationNoteDto[] | null;
+
+  column: BoardColumnDto;
+
+  contacts: ContactDto[] | null;
+
+  company: CompanyDto | null;
+
+  statusChangedAt: string;
 }
