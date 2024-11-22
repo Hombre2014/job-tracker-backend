@@ -45,6 +45,6 @@ export class JobApplicationsController {
 
   @Get('/:id')
   async getOne(@Param('id', ParseUUIDPipe) jobId: string, @AuthUser() user: AuthUserDto) {
-    return this.jobApplicationsService.findOne(jobId, user.userId);
+    return this.jobApplicationsService.findOneById(jobId, user.userId);
   }
 }

@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateJobApplicationDto } from './dtos/create-job-application.dto';
 import { UpdateJobApplicationDto } from './dtos/update-job-application.dto';
-import { Board } from '../boards/entities/board.entity';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
 import { ArgumentInvalidException } from '../../exceptions/argument-invalid.exceptions';
 import { Contact } from '../contacts/entities/contact.entity';
@@ -95,7 +94,7 @@ export class JobApplicationsService {
 
   async update(id: string, dto: UpdateJobApplicationDto, userId: string): Promise<JobApplication> {
     // Checks whether jobApplication exists for the current user
-    await this.findOne(id, userId);
+    await this.findOneById(id, userId);
 
     const jobApplication = await this.findOneById(id, userId);
 
@@ -116,7 +115,7 @@ export class JobApplicationsService {
   }
 
   async delete(id: string, userId: string) {
-    const jobApplication = await this.findOne(id, userId);
+    const jobApplication = await this.findOneById(id, userId);
     return this.jobApplicationsRepository.delete({ id: jobApplication.id });
   }
 
@@ -155,21 +154,6 @@ export class JobApplicationsService {
     jobApplication.company = company;
 
     await this.jobApplicationsRepository.save(jobApplication);
-  }
-
-  async findOne(jobId: string, userId: string): Promise<JobApplication> {
-    const jobApplication = await this.jobApplicationsRepository
-      .createQueryBuilder('job')
-      .innerJoin(BoardColumn, 'column', 'column.id = job.column_id')
-      .innerJoin(Board, 'board', 'board.id = column.board_id')
-      .where('board.user_id = :userId', { userId })
-      .getOne();
-
-    if (jobApplication == null) {
-      throw new BadRequestException(`Job application with '${jobId}' id doesn't exists`);
-    }
-
-    return jobApplication;
   }
 
   private async validateBoardColumn(boardColumnId: string | null, userId: string) {
