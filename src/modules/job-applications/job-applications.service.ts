@@ -157,7 +157,7 @@ export class JobApplicationsService {
     await this.jobApplicationsRepository.save(jobApplication);
   }
 
-  private async findOne(jobId: string, userId: string): Promise<JobApplication> {
+  async findOne(jobId: string, userId: string): Promise<JobApplication> {
     const jobApplication = await this.jobApplicationsRepository
       .createQueryBuilder('job')
       .innerJoin(BoardColumn, 'column', 'column.id = job.column_id')

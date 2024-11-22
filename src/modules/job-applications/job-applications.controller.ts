@@ -42,4 +42,9 @@ export class JobApplicationsController {
   async delete(@Param('id', ParseUUIDPipe) jobId: string, @AuthUser() user: AuthUserDto) {
     await this.jobApplicationsService.delete(jobId, user.userId);
   }
+
+  @Get('/:id')
+  async getOne(@Param('id', ParseUUIDPipe) jobId: string, @AuthUser() user: AuthUserDto) {
+    return this.jobApplicationsService.findOne(jobId, user.userId);
+  }
 }
