@@ -27,6 +27,7 @@ export class JobApplicationMapper {
     dto.contacts = entity.contacts?.map(contactMapper.toDto);
     dto.company = entity.company ? companyMapper.toDto(entity.company) : null;
     dto.statusChangedAt = entity.statusChangedAt;
+    dto.status = entity.status;
     return dto;
   }
 }
