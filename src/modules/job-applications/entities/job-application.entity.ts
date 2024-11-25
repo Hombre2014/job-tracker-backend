@@ -4,6 +4,7 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne 
 import { Contact } from '../../contacts/entities/contact.entity';
 import { JobApplicationNote } from '../../job-application-notes/entities/job-application-note.entity';
 import { Company } from '../../companies/entities/company.entity';
+import { JobApplicationStatus } from '../job-application-status.enum';
 
 @Entity('job_applications')
 export class JobApplication extends BaseEntity {
@@ -48,4 +49,11 @@ export class JobApplication extends BaseEntity {
   @OneToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
   company: Company;
+
+  @Column({
+    type: 'enum',
+    enum: JobApplicationStatus,
+    default: JobApplicationStatus.JobCreated,
+  })
+  status: JobApplicationStatus;
 }

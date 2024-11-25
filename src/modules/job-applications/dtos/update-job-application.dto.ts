@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { JobApplicationStatus } from '../job-application-status.enum';
 
 export class UpdateJobApplicationDto {
   @IsString()
@@ -32,4 +33,8 @@ export class UpdateJobApplicationDto {
   @IsString()
   @IsOptional()
   deadline?: string;
+
+  @IsEnum(JobApplicationStatus)
+  @IsOptional()
+  status?: JobApplicationStatus;
 }
