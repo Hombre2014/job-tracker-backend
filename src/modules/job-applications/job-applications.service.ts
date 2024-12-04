@@ -119,7 +119,18 @@ export class JobApplicationsService {
 
   async delete(id: string, userId: string) {
     const jobApplication = await this.findOneById(id, userId);
-    return this.jobApplicationsRepository.delete({ id: jobApplication.id });
+
+    let err;
+
+    try {
+      return this.jobApplicationsRepository.delete({ id: jobApplication.id });
+    } catch (error) {
+      err = error;
+    } finally {
+      if (!err && jobApplication.company) {
+        await this.companiesRepository.delete({ id: jobApplication.company.id });
+      }
+    }
   }
 
   async attachContact(id: string, contactId: string, userId: string) {
