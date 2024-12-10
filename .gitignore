@@ -7,6 +7,12 @@
 /dist
 /node_modules
 
+# Multer dir for file uploads
+/uploads
+
+# nestjs repl history
+.nestjs_repl_history
+
 # Logs
 logs
 *.log
