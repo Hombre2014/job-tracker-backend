@@ -12,6 +12,7 @@ import { EmailSenderModule } from './modules/email-sender/email-sender.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { JobApplicationNotesModule } from './modules/job-application-notes/job-application-notes.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
     ContactsModule,
     JobApplicationNotesModule,
     CompaniesModule,
+    AppwriteUploadsModule,
   ],
   controllers: [],
   providers: [
