@@ -24,7 +24,8 @@
     "migration:run": "yarn run migrations",
     "migration:generate": "cross-env NODE_ENV=development ts-node ./src/scripts/generate-migration.ts",
     "migration:create": "cross-env NODE_ENV=development ts-node ./src/scripts/create-migration.ts",
-    "migration:revert": "yarn run typeorm migration:revert -- -d src/data-source.ts"
+    "migration:revert": "yarn run typeorm migration:revert -- -d src/data-source.ts",
+    "repl": "npm run start -- --watch --entryFile repl"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -41,6 +42,7 @@
     "class-validator": "^0.14.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
+    "node-appwrite": "^14.1.0",
     "pg": "^8.11.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -58,6 +60,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.3.1",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
