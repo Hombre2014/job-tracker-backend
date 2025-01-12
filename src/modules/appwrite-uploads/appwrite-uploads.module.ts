@@ -12,5 +12,6 @@ import { MulterModule } from '@nestjs/platform-express';
   ],
   controllers: [AppwriteUploadsController],
   providers: [AppwriteUploadsService, ConfigService],
+  exports: [AppwriteUploadsService],
 })
 export class AppwriteUploadsModule {}

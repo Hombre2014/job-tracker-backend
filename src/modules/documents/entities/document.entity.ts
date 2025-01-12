@@ -21,7 +21,7 @@ export class Document extends BaseEntity {
   category: DocumentCategory;
 
   @Column({ nullable: true })
-  description: string;
+  description?: string;
 
   @Column()
   url: string;
