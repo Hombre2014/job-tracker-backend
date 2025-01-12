@@ -10,6 +10,7 @@ import { ContactEmail } from './modules/contacts/entities/contact-emails.entity'
 import { ContactPhone } from './modules/contacts/entities/contact-phones.entity';
 import { JobApplicationNote } from './modules/job-application-notes/entities/job-application-note.entity';
 import { Company } from './modules/companies/entities/company.entity';
+import { Document } from './modules/documents/entities/document.entity';
 
 if (process.env.NODE_ENV !== 'test') {
   config();
@@ -35,6 +36,7 @@ export const getDataSourceOptions = (): DataSourceOptions => ({
     ContactEmail,
     ContactPhone,
     Company,
+    Document,
   ],
   migrations: ['dist/migrations/**/*.js'],
   migrationsRun: false,

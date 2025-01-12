@@ -5,6 +5,7 @@ import { UserRole, UserRoleType } from '../enums/user-role.enum';
 import { Board } from '../../boards/entities/board.entity';
 import { BaseEntity } from '../../../entities/base.entity';
 import { UserCodeVerification } from './user.code.verification.entity';
+import { Document } from '../../documents/entities/document.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -36,6 +37,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => UserCodeVerification, (userCode) => userCode.user)
   userCodeVerifications: UserCodeVerification[];
+
+  @OneToMany(() => Document, (document) => document.user)
+  documents: Document[];
 
   private currentPassword: string;
 

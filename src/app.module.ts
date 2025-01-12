@@ -13,6 +13,7 @@ import { ContactsModule } from './modules/contacts/contacts.module';
 import { JobApplicationNotesModule } from './modules/job-application-notes/job-application-notes.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploa
     JobApplicationNotesModule,
     CompaniesModule,
     AppwriteUploadsModule,
+    DocumentsModule,
   ],
   controllers: [],
   providers: [
