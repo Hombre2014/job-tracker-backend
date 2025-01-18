@@ -1,8 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../entities/base.entity';
 import { User } from '../../users/entities/user.entity';
 import { DocumentCategory } from '../document-category.enum';
 import { Board } from '../../boards/entities/board.entity';
+import { JobApplication } from '../../job-applications/entities/job-application.entity';
 
 @Entity('documents')
 export class Document extends BaseEntity {
@@ -29,4 +30,8 @@ export class Document extends BaseEntity {
   @ManyToOne(() => Board, (board) => board.documents, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'board_id' })
   board?: Board;
+
+  @ManyToMany(() => JobApplication, (jobApplication) => jobApplication.documents)
+  @JoinTable()
+  jobApplications: JobApplication[];
 }

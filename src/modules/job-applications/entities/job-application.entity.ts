@@ -5,6 +5,7 @@ import { Contact } from '../../contacts/entities/contact.entity';
 import { JobApplicationNote } from '../../job-application-notes/entities/job-application-note.entity';
 import { Company } from '../../companies/entities/company.entity';
 import { JobApplicationStatus } from '../job-application-status.enum';
+import { Document } from '../../documents/entities/document.entity';
 
 @Entity('job_applications')
 export class JobApplication extends BaseEntity {
@@ -56,4 +57,7 @@ export class JobApplication extends BaseEntity {
     default: JobApplicationStatus.JobCreated,
   })
   status: JobApplicationStatus;
+
+  @ManyToMany(() => Document, (document) => document.jobApplications)
+  documents: Document[];
 }
