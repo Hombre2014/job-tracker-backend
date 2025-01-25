@@ -7,6 +7,7 @@ import { BoardMapper } from '../../boards/boards.mapper';
 import { JobApplicationMapper } from '../../job-applications/job-applications.mapper';
 import { ContactEmailMapper } from './contact-email.mapper';
 import { ContactPhoneMapper } from './contact-phone.mapper';
+import { Company } from '../../companies/entities/company.entity';
 
 @Injectable()
 export class ContactMapper {
@@ -23,8 +24,7 @@ export class ContactMapper {
     dto.firstName = entity.firstName;
     dto.lastName = entity.lastName;
     dto.jobTitle = entity.jobTitle;
-    dto.companyName = entity.companyName;
-    dto.companyLocation = entity.companyLocation;
+    dto.companies = entity.companies;
     dto.twitterUrl = entity.twitterUrl;
     dto.facebookUrl = entity.facebookUrl;
     dto.linkedinUrl = entity.linkedinUrl;
@@ -44,8 +44,9 @@ export class ContactMapper {
     entity.firstName = dto.firstName;
     entity.lastName = dto.lastName;
     entity.jobTitle = dto.jobTitle;
-    entity.companyName = dto.companyName;
-    entity.companyLocation = dto.companyLocation;
+    entity.companies = dto.companyIds.map((companyId) =>
+      Object.assign(new Company(), { id: companyId }),
+    );
     entity.twitterUrl = dto.twitterUrl;
     entity.facebookUrl = dto.facebookUrl;
     entity.linkedinUrl = dto.linkedinUrl;

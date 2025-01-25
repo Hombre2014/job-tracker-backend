@@ -14,7 +14,7 @@ export class CompanyMapper {
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
     dto.deletedAt = entity.deletedAt;
-    dto.jobApplicationId = entity.jobApplication?.id;
+    dto.jobApplications = entity.jobApplications;
     return dto;
   }
 }
