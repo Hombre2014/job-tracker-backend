@@ -1,6 +1,7 @@
 import { BaseEntity } from '../../../entities/base.entity';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import { JobApplication } from '../../job-applications/entities/job-application.entity';
+import { Contact } from '../../contacts/entities/contact.entity';
 
 @Entity('companies')
 export class Company extends BaseEntity {
@@ -16,7 +17,9 @@ export class Company extends BaseEntity {
   @Column({ nullable: true })
   industry: string | null;
 
-  @OneToOne(() => JobApplication)
-  @JoinColumn({ name: 'job_application_id' })
-  jobApplication: JobApplication;
+  @OneToMany(() => JobApplication, (jobApplication) => jobApplication.company)
+  jobApplications: JobApplication[];
+
+  @ManyToMany(() => Contact, (contact) => contact.companies)
+  contacts: Contact[];
 }
