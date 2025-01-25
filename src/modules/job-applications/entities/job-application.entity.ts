@@ -1,6 +1,6 @@
 import { BaseEntity } from '../../../entities/base.entity';
 import { BoardColumn } from '../../board-columns/entities/board-column.entity';
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { Contact } from '../../contacts/entities/contact.entity';
 import { JobApplicationNote } from '../../job-application-notes/entities/job-application-note.entity';
 import { Company } from '../../companies/entities/company.entity';
@@ -47,7 +47,7 @@ export class JobApplication extends BaseEntity {
   @OneToMany(() => JobApplicationNote, (note) => note.jobApplication, { onDelete: 'CASCADE' })
   notes: JobApplicationNote[];
 
-  @OneToOne(() => Company, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Company, (company) => company.jobApplications, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
   company: Company;
 

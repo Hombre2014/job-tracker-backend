@@ -63,7 +63,6 @@ export class DocumentsService {
     page: number;
     take: number;
   }> {
-    console.log(query);
     const { sort, page, take } = query;
     const skip = page * take;
     const order = {};

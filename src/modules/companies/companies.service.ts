@@ -38,16 +38,13 @@ export class CompaniesService {
     const company = await this.companiesRepository.findOne({
       where: {
         id: companyId,
+        jobApplications: { column: { board: { user: { id: userId } } } },
       },
-      relations: { jobApplication: true },
+      relations: { jobApplications: true },
     });
 
     if (!company) {
       throw new NotFoundException(ExceptionMessages.doesNotExist(Company.name));
-    }
-
-    if (company.jobApplication) {
-      await this.jobApplicationBelongsToUser(company.jobApplication.id, userId);
     }
 
     return company;

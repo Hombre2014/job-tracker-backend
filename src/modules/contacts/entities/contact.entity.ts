@@ -4,6 +4,7 @@ import { Board } from '../../boards/entities/board.entity';
 import { JobApplication } from '../../job-applications/entities/job-application.entity';
 import { ContactEmail } from './contact-emails.entity';
 import { ContactPhone } from './contact-phones.entity';
+import { Company } from '../../companies/entities/company.entity';
 
 @Entity('contacts')
 export class Contact extends BaseEntity {
@@ -30,11 +31,9 @@ export class Contact extends BaseEntity {
   @OneToMany(() => ContactPhone, (contactPhones) => contactPhones.contact)
   contactPhones: ContactPhone[];
 
-  @Column({ name: 'company_name', nullable: true })
-  companyName: string;
-
-  @Column({ name: 'company_location', nullable: true })
-  companyLocation: string;
+  @ManyToMany(() => Company, (company) => company.contacts)
+  @JoinTable()
+  companies: Company[];
 
   @Column({ name: 'twitter_url', nullable: true })
   twitterUrl: string;

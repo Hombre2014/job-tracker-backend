@@ -1,4 +1,5 @@
 import { BaseDto } from '../../../dtos/base.dto';
+import { JobApplication } from '../../job-applications/entities/job-application.entity';
 
 export class CompanyDto extends BaseDto {
   name: string;
@@ -9,5 +10,5 @@ export class CompanyDto extends BaseDto {
 
   industry?: string;
 
-  jobApplicationId?: string;
+  jobApplications?: JobApplication[];
 }
