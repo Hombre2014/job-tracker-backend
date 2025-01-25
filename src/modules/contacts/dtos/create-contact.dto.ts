@@ -16,13 +16,9 @@ export class CreateContactDto {
   @IsUUID()
   boardId: string;
 
-  @IsString()
-  @IsOptional()
-  companyName?: string;
-
-  @IsString()
-  @IsOptional()
-  companyLocation?: string;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  companyIds: string[];
 
   @IsString()
   @IsOptional()
