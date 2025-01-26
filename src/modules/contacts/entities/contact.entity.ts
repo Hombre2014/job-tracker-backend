@@ -14,7 +14,7 @@ export class Contact extends BaseEntity {
   @Column({ name: 'last_name' })
   lastName: string;
 
-  @Column({ name: 'job_title' })
+  @Column({ name: 'job_title', nullable: true })
   jobTitle: string;
 
   @ManyToOne(() => Board, (board) => board.contacts, { nullable: false, onDelete: 'CASCADE' })
