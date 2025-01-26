@@ -44,9 +44,8 @@ export class ContactMapper {
     entity.firstName = dto.firstName;
     entity.lastName = dto.lastName;
     entity.jobTitle = dto.jobTitle;
-    entity.companies = dto.companyIds.map((companyId) =>
-      Object.assign(new Company(), { id: companyId }),
-    );
+    entity.companies =
+      dto.companyIds?.map((companyId) => Object.assign(new Company(), { id: companyId })) ?? [];
     entity.twitterUrl = dto.twitterUrl;
     entity.facebookUrl = dto.facebookUrl;
     entity.linkedinUrl = dto.linkedinUrl;

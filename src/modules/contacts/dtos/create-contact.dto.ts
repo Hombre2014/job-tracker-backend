@@ -11,11 +11,13 @@ export class CreateContactDto {
   lastName: string;
 
   @IsString()
-  jobTitle: string;
+  @IsOptional()
+  jobTitle?: string;
 
   @IsUUID()
   boardId: string;
 
+  @IsOptional()
   @IsArray()
   @IsUUID('all', { each: true })
   companyIds: string[];
