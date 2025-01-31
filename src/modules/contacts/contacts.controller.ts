@@ -23,17 +23,17 @@ export class ContactsController {
 
   @Get()
   async getContacts(@AuthUser() user: AuthUserDto, @Query() params: FindContactDto) {
-    return await this.contactsService.find(user.userId, params);
+    return this.contactsService.find(user.userId, params);
   }
 
   @Post()
   async createContact(@Body() body: CreateContactDto, @AuthUser() user: AuthUserDto) {
-    await this.contactsService.create(user.userId, body);
+    return this.contactsService.create(user.userId, body);
   }
 
   @Put()
   async updateContact(@Body() body: UpdateContact, @AuthUser() user: AuthUserDto) {
-    await this.contactsService.update(user.userId, body);
+    return this.contactsService.update(user.userId, body);
   }
 
   @Post('/jobApplication/assign')
@@ -41,7 +41,7 @@ export class ContactsController {
     @Body() body: AssignContactToJobApplication,
     @AuthUser() user: AuthUserDto,
   ) {
-    await this.contactsService.assignContactToJobApplication(
+    return this.contactsService.assignContactToJobApplication(
       body.contactId,
       body.jobApplicationId,
       user.userId,
@@ -53,7 +53,7 @@ export class ContactsController {
     @Body() body: AssignContactToJobApplication,
     @AuthUser() user: AuthUserDto,
   ) {
-    await this.contactsService.unassignContactFromJobApplication(
+    return this.contactsService.unassignContactFromJobApplication(
       body.contactId,
       body.jobApplicationId,
       user.userId,
@@ -62,6 +62,6 @@ export class ContactsController {
 
   @Delete('/:id')
   async deleteContact(@Param('id', ParseUUIDPipe) id: string, @AuthUser() user: AuthUserDto) {
-    await this.contactsService.delete(id, user.userId);
+    return this.contactsService.delete(id, user.userId);
   }
 }
