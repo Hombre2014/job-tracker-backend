@@ -48,7 +48,10 @@ export class ContactsService {
       await this.contactMethodService.createContactMethodPhonesBulk(body.phones, contactEntity);
     }
 
-    return this.contactsRepository.findOneBy({ id: contactEntity.id });
+    return this.contactsRepository.findOne({
+      where: { id: contactEntity.id },
+      relations: { contactEmails: true, contactPhones: true },
+    });
   }
 
   async update(userId: string, body: UpdateContact) {
