@@ -5,6 +5,7 @@ import { UpdateCompanyDto } from './dtos/update-company.dto';
 import { AuthUser } from '../auth/user.decorator';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
 import { CompanyMapper } from './companies.mapper';
+import { GetCompanyByNameDto } from './dtos/get-company-by-name.dto';
 
 @Controller('companies')
 export class CompaniesController {
@@ -17,6 +18,12 @@ export class CompaniesController {
   async createCompany(@Body() createCompanyDto: CreateCompanyDto, @AuthUser() user: AuthUserDto) {
     const company = await this.companiesService.create(createCompanyDto, user);
     return this.mapper.toDto(company);
+  }
+
+  @Get('/by-name')
+  async countCompaniesByName(@Body() { name }: GetCompanyByNameDto) {
+    console.log(name);
+    return this.companiesService.countByName(name);
   }
 
   @Get('/:id')

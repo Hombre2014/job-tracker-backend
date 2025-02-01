@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateCompanyDto } from './dtos/create-company.dto';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { UpdateCompanyDto } from './dtos/update-company.dto';
@@ -48,6 +48,13 @@ export class CompaniesService {
     }
 
     return company;
+  }
+
+  async countByName(name: string) {
+    return {
+      startsWithCount: await this.companiesRepository.countBy({ name: ILike(`${name}%`) }),
+      exactMatchCount: await this.companiesRepository.countBy({ name }),
+    };
   }
 
   async update(companyId: string, updateCompanyDto: UpdateCompanyDto, user: AuthUserDto) {
