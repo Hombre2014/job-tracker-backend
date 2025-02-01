@@ -13,6 +13,7 @@ export class UserMapper {
     dto.lastName = user.lastName;
     dto.createdAt = user.createdAt;
     dto.updatedAt = user.updatedAt;
+    dto.profilePicUrl = user.profilePicUrl;
     return dto;
   }
 }

@@ -17,4 +17,6 @@ export class CreateUserDto {
 
   @IsString()
   lastName: string;
+
+  profilePicUrl: string;
 }

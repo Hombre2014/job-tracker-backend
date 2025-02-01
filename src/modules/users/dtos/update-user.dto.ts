@@ -17,4 +17,6 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  profilePicUrl: string;
 }

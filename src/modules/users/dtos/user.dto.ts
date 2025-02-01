@@ -18,4 +18,7 @@ export class UserDto extends BaseDto {
 
   @IsString()
   lastName: string;
+
+  @IsString()
+  profilePicUrl: string;
 }

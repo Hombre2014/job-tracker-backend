@@ -24,7 +24,7 @@ export class AppwriteUploadsService {
 
   async uploadFile(file: Express.Multer.File) {
     try {
-      const fileBuffer = await fs.promises.readFile(file.path);
+      const fileBuffer = file.path ? await fs.promises.readFile(file.path) : file.buffer;
       const { $id: fileId, name: fileName } = await this.storage.createFile(
         this.bucketId,
         'unique()',

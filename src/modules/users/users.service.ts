@@ -12,6 +12,7 @@ import { BoardsService } from '../boards/boards.service';
 import { VerificationProcess } from './enums/verification-process.enum';
 import * as bcrypt from 'bcrypt';
 import { EmailVerificationCodeDto } from './dtos/email-verification-code.dto';
+import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
 
 @Injectable()
 export class UsersService {
@@ -19,12 +20,18 @@ export class UsersService {
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly userCodeVerificationService: UserCodeVerificationService,
     private readonly boardService: BoardsService,
+    private readonly appwriteUploadsService: AppwriteUploadsService,
   ) {}
 
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(dto: CreateUserDto, profilePic?: Express.Multer.File): Promise<User> {
     await this.validateIfUserExists(dto.email);
-    const user = this.usersRepository.create(dto);
 
+    if (profilePic) {
+      const { url: profilePicUrl } = await this.appwriteUploadsService.uploadFile(profilePic);
+      dto.profilePicUrl = profilePicUrl;
+    }
+
+    const user = this.usersRepository.create(dto);
     const entity = await this.usersRepository.save(user);
 
     await this.boardService.createDefaultBoard(entity.id);
@@ -60,8 +67,14 @@ export class UsersService {
     return this.usersRepository.findBy(where);
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User> {
+  async update(id: string, dto: UpdateUserDto, profilePic: Express.Multer.File): Promise<User> {
     const user = await this.findOneBy({ id });
+
+    if (profilePic) {
+      const { url: profilePicUrl } = await this.appwriteUploadsService.uploadFile(profilePic);
+      dto.profilePicUrl = profilePicUrl;
+    }
+
     Object.assign(user, dto);
     return this.usersRepository.save(user);
   }

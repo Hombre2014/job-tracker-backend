@@ -26,6 +26,9 @@ export class User extends BaseEntity {
   })
   role: UserRoleType;
 
+  @Column({ name: 'profile_pic_url', nullable: true })
+  profilePicUrl: string;
+
   @Column({ name: 'first_name' })
   firstName: string;
 

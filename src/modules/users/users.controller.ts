@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -24,6 +25,7 @@ import { VerificationProcess } from './enums/verification-process.enum';
 import { DeleteUserDto } from './dtos/delete-user.dto';
 import { UpdatePasswordDto } from './dtos/update-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -36,11 +38,13 @@ export class UsersController {
 
   @Post()
   @Public()
-  async createUser(@Body() body: CreateUserDto) {
+  @UseInterceptors(FileInterceptor('profilePic'))
+  async createUser(@Body() body: CreateUserDto, @UploadedFile() profilePic: Express.Multer.File) {
+    console.log(profilePic);
     if (!body.role) {
       body.role = 'user';
     }
-    const entity = await this.usersService.create(body);
+    const entity = await this.usersService.create(body, profilePic);
     return this.mapper.toDto(entity);
   }
 
@@ -58,8 +62,13 @@ export class UsersController {
   }
 
   @Patch()
-  async updateUser(@AuthUser() user: AuthUserDto, @Body() body: UpdateUserDto) {
-    const entity = await this.usersService.update(user.userId, body);
+  @UseInterceptors(FileInterceptor('profilePic'))
+  async updateUser(
+    @AuthUser() user: AuthUserDto,
+    @Body() body: UpdateUserDto,
+    @UploadedFile() profilePic: Express.Multer.File,
+  ) {
+    const entity = await this.usersService.update(user.userId, body, profilePic);
     return this.mapper.toDto(entity);
   }
 
