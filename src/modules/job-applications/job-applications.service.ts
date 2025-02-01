@@ -87,10 +87,6 @@ export class JobApplicationsService {
       );
     }
 
-    if (dto.company) {
-      jobApplicationEntity.company = await this.companiesRepository.save(dto.company);
-    }
-
     const { id } = await this.jobApplicationsRepository.save(jobApplicationEntity);
 
     return await this.findOneById(id, userId);

@@ -1,7 +1,6 @@
 import { IsArray, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { CreateContactDto } from '../../contacts/dtos/create-contact.dto';
 import { Type } from 'class-transformer';
-import { CreateCompanyDto } from '../../companies/dtos/create-company.dto';
 import { CreateJobApplicationNoteDto } from '../../job-application-notes/dtos/create-job-application-note.dto';
 
 export class CreateJobApplicationDto {
@@ -46,9 +45,4 @@ export class CreateJobApplicationDto {
   @ValidateNested({ each: true })
   @Type(() => CreateJobApplicationNoteDto)
   notes?: CreateJobApplicationNoteDto[];
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateCompanyDto)
-  company?: CreateCompanyDto;
 }
