@@ -18,8 +18,7 @@ export class JobApplicationsController {
     @Param('columnId', ParseUUIDPipe) columnId: string,
     @AuthUser() user: AuthUserDto,
   ) {
-    const entities = await this.jobApplicationsService.findBy(columnId, user.userId);
-    return entities.map((e) => this.mapper.toDto(e));
+    return this.jobApplicationsService.findBy(columnId, user.userId);
   }
 
   @Post()
