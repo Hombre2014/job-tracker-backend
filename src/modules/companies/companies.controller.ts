@@ -22,7 +22,6 @@ export class CompaniesController {
 
   @Get('/by-name')
   async countCompaniesByName(@Body() { name }: GetCompanyByNameDto) {
-    console.log(name);
     return this.companiesService.countByName(name);
   }
 
