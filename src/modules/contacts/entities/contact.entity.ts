@@ -47,6 +47,9 @@ export class Contact extends BaseEntity {
   @Column({ name: 'github_url', nullable: true })
   githubUrl: string;
 
+  @Column({ name: 'photo_url', nullable: true })
+  photoUrl: string;
+
   @Column({ nullable: true })
   comment: string;
 }

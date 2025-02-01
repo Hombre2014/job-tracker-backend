@@ -11,6 +11,7 @@ import { ContactDto } from './dtos/contact.dto';
 import { UpdateContact } from './dtos/update-contact.dto';
 import { ContactMethodsService } from './contact-methods.service';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
+import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
 
 @Injectable()
 export class ContactsService {
@@ -21,6 +22,7 @@ export class ContactsService {
     private readonly jobApplicationsRepository: Repository<JobApplication>,
     private readonly mapper: ContactMapper,
     private readonly contactMethodService: ContactMethodsService,
+    private readonly appwriteUploadsService: AppwriteUploadsService,
   ) {}
 
   async find(userId: string, params: FindContactDto): Promise<ContactDto[]> {
@@ -35,9 +37,13 @@ export class ContactsService {
     return contacts.map(this.mapper.toDto);
   }
 
-  async create(userId: string, body: CreateContactDto) {
+  async create(userId: string, body: CreateContactDto, photo?: Express.Multer.File) {
     await this.validateBoardExists(userId, body.boardId);
     let contactEntity = this.mapper.toEntity(body);
+    if (photo) {
+      const { url: photoUrl } = await this.appwriteUploadsService.uploadFile(photo);
+      contactEntity.photoUrl = photoUrl;
+    }
     contactEntity = await this.contactsRepository.save(contactEntity);
 
     if (body.emails) {
@@ -54,9 +60,13 @@ export class ContactsService {
     });
   }
 
-  async update(userId: string, body: UpdateContact) {
+  async update(userId: string, body: UpdateContact, photo?: Express.Multer.File) {
     await this.validateContactExists(body.id, userId);
     const contactEntity = this.mapper.toEntity(body);
+    if (photo) {
+      const { url: photoUrl } = await this.appwriteUploadsService.uploadFile(photo);
+      contactEntity.photoUrl = photoUrl;
+    }
     return this.contactsRepository.update({ id: body.id }, contactEntity);
   }
 
