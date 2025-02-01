@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class GetCompanyByNameDto {
+export class CompanyNameDto {
   @IsString()
   name: string;
 }

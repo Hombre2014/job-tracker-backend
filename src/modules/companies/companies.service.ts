@@ -57,6 +57,17 @@ export class CompaniesService {
     };
   }
 
+  async fetchStartsWith(name: string) {
+    return this.companiesRepository.find({
+      where: { name: ILike(`${name}%`) },
+      order: { name: 'ASC' },
+    });
+  }
+
+  async getOneByName(name: string) {
+    return this.companiesRepository.findOneByOrFail({ name });
+  }
+
   async update(companyId: string, updateCompanyDto: UpdateCompanyDto, user: AuthUserDto) {
     const company = await this.findOne(companyId, user);
 
