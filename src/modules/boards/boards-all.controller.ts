@@ -16,4 +16,9 @@ export class BoardsAllController {
     const entities = await this.boardsService.getAllBoardsWithData(user.userId);
     return entities.map(this.mapper.toDto);
   }
+
+  @Get('/job-applications')
+  async fetchAllJobApplicationsCropped(@AuthUser() { userId }: AuthUserDto) {
+    return this.boardsService.fetchAllJobApplicationsCropped(userId);
+  }
 }

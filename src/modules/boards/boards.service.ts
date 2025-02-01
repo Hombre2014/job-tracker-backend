@@ -8,6 +8,7 @@ import { FindBoardDto } from './dtos/find-board.dto';
 import { UpdateBoardDto } from './dtos/update-board.dto';
 import { BoardColumnsService } from '../board-columns/board-columns.service';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
+import { JobApplication } from '../job-applications/entities/job-application.entity';
 
 @Injectable()
 export class BoardsService {
@@ -17,6 +18,8 @@ export class BoardsService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly boardsColumnService: BoardColumnsService,
+    @InjectRepository(JobApplication)
+    private readonly jobApplicationsRepository: Repository<JobApplication>,
   ) {}
 
   async create(dto: CreateBoardDto, userId: string): Promise<Board> {
@@ -84,6 +87,17 @@ export class BoardsService {
   async remove(boardId: string, userId: string): Promise<Board> {
     const board = await this.findBoard(boardId, userId);
     return this.boardsRepository.remove(board);
+  }
+
+  async fetchAllJobApplicationsCropped(userId: string) {
+    return this.jobApplicationsRepository.find({
+      where: {
+        column: { board: { user: { id: userId } } },
+      },
+      select: { id: true, title: true, color: true, company: { id: true, name: true } },
+      relations: { company: true },
+      order: { title: 'ASC' },
+    });
   }
 
   // Finds a specific board by the boardId assigned to a specific user
