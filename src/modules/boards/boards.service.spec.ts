@@ -11,6 +11,7 @@ import { CreateBoardDto } from './dtos/create-board.dto';
 import { FindBoardDto } from './dtos/find-board.dto';
 import { BoardColumn } from '../board-columns/entities/board-column.entity';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
+import { JobApplication } from '../job-applications/entities/job-application.entity';
 
 describe('BoardsService', () => {
   let service: BoardsService;
@@ -58,12 +59,14 @@ describe('BoardsService', () => {
 
     const boardRepositoryToken = getRepositoryToken(Board);
     const userRepositoryToken = getRepositoryToken(User);
+    const jobApplicationRepositoryToken = getRepositoryToken(JobApplication);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BoardsService,
         { provide: boardRepositoryToken, useValue: boardsRepositoryMock },
         { provide: userRepositoryToken, useValue: usersRepositoryMock },
         { provide: BoardColumnsService, useValue: boardColumnsServiceMock },
+        { provide: jobApplicationRepositoryToken, useValue: {} },
       ],
     }).compile();
 
