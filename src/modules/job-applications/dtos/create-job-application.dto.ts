@@ -12,6 +12,9 @@ export class CreateJobApplicationDto {
   description?: string | null;
 
   @IsUUID()
+  companyId: string;
+
+  @IsUUID()
   columnId: string;
 
   @IsString()

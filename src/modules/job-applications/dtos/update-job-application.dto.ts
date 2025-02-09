@@ -12,6 +12,10 @@ export class UpdateJobApplicationDto {
 
   @IsUUID()
   @IsOptional()
+  companyId?: string;
+
+  @IsUUID()
+  @IsOptional()
   columnId?: string;
 
   @IsString()

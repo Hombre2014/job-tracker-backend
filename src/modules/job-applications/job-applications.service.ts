@@ -67,6 +67,7 @@ export class JobApplicationsService {
     const jobApplication = this.jobApplicationsRepository.create({
       ..._.omit(dto, ['contacts', 'notes', 'company']),
       column: { id: dto.columnId },
+      company: { id: dto.companyId },
     });
 
     const jobApplicationEntity = await this.jobApplicationsRepository.save(jobApplication);
@@ -102,9 +103,18 @@ export class JobApplicationsService {
     if (dto.columnId && jobApplication.column.id !== dto.columnId) {
       const boardColumnExists = await this.boardColumnsRepository.existsBy({ id: dto.columnId });
       if (!boardColumnExists) {
-        throw new BadRequestException(`Board column with '${dto.columnId}' id doesn't exists`);
+        throw new BadRequestException(`Board column with id '${dto.columnId}' does not exists`);
       }
       jobApplication.column.id = dto.columnId;
+    }
+
+    if (dto.companyId && jobApplication?.company?.id !== dto.companyId) {
+      const company = await this.companiesRepository.findOneBy({ id: dto.companyId });
+      if (company) {
+        jobApplication.company = company;
+      } else {
+        throw new BadRequestException(`Company with id '${dto.companyId}' does not exist`);
+      }
     }
 
     if (dto.status) {
