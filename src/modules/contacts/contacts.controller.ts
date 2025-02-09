@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -30,23 +31,23 @@ export class ContactsController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('photo'))
-  async createContact(
-    @UploadedFile() photo: Express.Multer.File,
-    @Body() body: CreateContactDto,
-    @AuthUser() user: AuthUserDto,
-  ) {
-    return this.contactsService.create(user.userId, body, photo);
+  async createContact(@Body() body: CreateContactDto, @AuthUser() user: AuthUserDto) {
+    return this.contactsService.create(user.userId, body);
   }
 
   @Put()
+  async updateContact(@Body() body: UpdateContact, @AuthUser() user: AuthUserDto) {
+    return this.contactsService.update(user.userId, body);
+  }
+
+  @Patch('/:id/photo')
   @UseInterceptors(FileInterceptor('photo'))
-  async updateContact(
+  async updatePhotoUrl(
     @UploadedFile() photo: Express.Multer.File,
-    @Body() body: UpdateContact,
-    @AuthUser() user: AuthUserDto,
+    @AuthUser() { userId }: AuthUserDto,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.contactsService.update(user.userId, body, photo);
+    return this.contactsService.update(userId, { id }, photo);
   }
 
   @Post('/jobApplication/assign')
