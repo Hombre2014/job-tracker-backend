@@ -12,6 +12,7 @@ import { UpdateContact } from './dtos/update-contact.dto';
 import { ContactMethodsService } from './contact-methods.service';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
 import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
+import { Company } from '../companies/entities/company.entity';
 
 @Injectable()
 export class ContactsService {
@@ -20,6 +21,8 @@ export class ContactsService {
     @InjectRepository(Board) private readonly boardsRepository: Repository<Board>,
     @InjectRepository(JobApplication)
     private readonly jobApplicationsRepository: Repository<JobApplication>,
+    @InjectRepository(Company)
+    private readonly companiesRepository: Repository<Company>,
     private readonly mapper: ContactMapper,
     private readonly contactMethodService: ContactMethodsService,
     private readonly appwriteUploadsService: AppwriteUploadsService,
@@ -39,7 +42,11 @@ export class ContactsService {
 
   async create(userId: string, body: CreateContactDto, photo?: Express.Multer.File) {
     await this.validateBoardExists(userId, body.boardId);
-    let contactEntity = this.mapper.toEntity(body);
+    let contactEntity = await this.mapper.toEntity(
+      body,
+      this.companiesRepository,
+      this.boardsRepository,
+    );
     if (photo) {
       const { url: photoUrl } = await this.appwriteUploadsService.uploadFile(photo);
       contactEntity.photoUrl = photoUrl;
@@ -56,18 +63,22 @@ export class ContactsService {
 
     return this.contactsRepository.findOne({
       where: { id: contactEntity.id },
-      relations: { contactEmails: true, contactPhones: true },
+      relations: { contactEmails: true, contactPhones: true, companies: true },
     });
   }
 
   async update(userId: string, body: UpdateContact, photo?: Express.Multer.File) {
     await this.validateContactExists(body.id, userId);
-    const contactEntity = this.mapper.toEntity(body);
+    const contactEntity = await this.mapper.toEntity(
+      body,
+      this.companiesRepository,
+      this.boardsRepository,
+    );
     if (photo) {
       const { url: photoUrl } = await this.appwriteUploadsService.uploadFile(photo);
       contactEntity.photoUrl = photoUrl;
     }
-    return this.contactsRepository.update({ id: body.id }, contactEntity);
+    return this.contactsRepository.save(contactEntity);
   }
 
   async delete(contactId: string, userId: string) {

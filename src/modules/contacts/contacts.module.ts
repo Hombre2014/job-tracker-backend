@@ -13,10 +13,11 @@ import { ContactPhoneMapper } from './mappers/contact-phone.mapper';
 import { ContactMethodsService } from './contact-methods.service';
 import { ContactMethodsController } from './contact-method.controller';
 import { AppwriteUploadsModule } from '../appwrite-uploads/appwrite-uploads.module';
+import { Company } from '../companies/entities/company.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Contact, ContactEmail, ContactPhone, Board, JobApplication]),
+    TypeOrmModule.forFeature([Contact, ContactEmail, ContactPhone, Board, JobApplication, Company]),
     AppwriteUploadsModule,
   ],
   providers: [

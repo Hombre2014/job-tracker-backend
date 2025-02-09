@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Contact } from '../entities/contact.entity';
 import { ContactDto } from '../dtos/contact.dto';
-import { CreateContactDto } from '../dtos/create-contact.dto';
-import { Board } from '../../boards/entities/board.entity';
 import { BoardMapper } from '../../boards/boards.mapper';
 import { JobApplicationMapper } from '../../job-applications/job-applications.mapper';
 import { ContactEmailMapper } from './contact-email.mapper';
 import { ContactPhoneMapper } from './contact-phone.mapper';
+import { In, Repository } from 'typeorm';
+import { Board } from '../../boards/entities/board.entity';
 import { Company } from '../../companies/entities/company.entity';
 
 @Injectable()
@@ -31,6 +31,7 @@ export class ContactMapper {
     dto.githubUrl = entity.githubUrl;
     dto.comment = entity.comment;
     dto.createdAt = entity.createdAt;
+    dto.companies = entity.companies;
     dto.updatedAt = entity.updatedAt;
     dto.board = entity.board ? boardMapper.toDto(entity.board) : undefined;
     dto.jobApplications = entity.jobApplications?.map(jobApplicationMapper.toDto);
@@ -39,21 +40,24 @@ export class ContactMapper {
     return dto;
   }
 
-  toEntity(dto: CreateContactDto) {
+  async toEntity(
+    dto,
+    companiesRepository: Repository<Company>,
+    boardsRepository: Repository<Board>,
+  ) {
     const entity = new Contact();
-    entity.firstName = dto.firstName;
-    entity.lastName = dto.lastName;
-    entity.jobTitle = dto.jobTitle;
-    entity.companies =
-      dto.companyIds?.map((companyId) => Object.assign(new Company(), { id: companyId })) ?? [];
-    entity.twitterUrl = dto.twitterUrl;
-    entity.facebookUrl = dto.facebookUrl;
-    entity.linkedinUrl = dto.linkedinUrl;
-    entity.githubUrl = dto.githubUrl;
-    entity.comment = dto.comment;
-    const board = new Board();
-    board.id = dto.boardId;
-    entity.board = board;
+
+    Object.assign(entity, { ...dto, companyIds: undefined, boardId: undefined });
+
+    entity.companies = dto.companyIds
+      ? await companiesRepository.findBy({ id: In(dto.companyIds) })
+      : entity.companies;
+
+    const board = await boardsRepository.findOneBy({ id: dto.boardId });
+    if (board) {
+      entity.board = board;
+    }
+
     return entity;
   }
 }
