@@ -25,7 +25,13 @@ export class CompaniesController {
     return this.companiesService.countByName(name);
   }
 
-  @Get('/starts-with')
+  // @Get('/starts-with')
+  // async fetchStartsWith(@Body() { name }: CompanyNameDto) {
+  //   return this.companiesService.fetchStartsWith(name);
+  // }
+
+  // Changed by AI suggested fix
+  @Post('/starts-with')
   async fetchStartsWith(@Body() { name }: CompanyNameDto) {
     return this.companiesService.fetchStartsWith(name);
   }
