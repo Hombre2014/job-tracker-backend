@@ -28,7 +28,7 @@ export class ContactsService {
     private readonly appwriteUploadsService: AppwriteUploadsService,
   ) {}
 
-  async find(userId: string, params: FindContactDto): Promise<ContactDto[]> {
+  async find(userId: string, params: FindContactDto): Promise<Contact[]> {
     if (!userId) {
       throw new BadRequestException(ExceptionMessages.fieldIsRequired('userId'));
     }
@@ -37,7 +37,7 @@ export class ContactsService {
       relations: { board: true, jobApplications: true, contactEmails: true, contactPhones: true },
       order: { createdAt: 'ASC' },
     });
-    return contacts.map(this.mapper.toDto);
+    return contacts;
   }
 
   async create(userId: string, body: CreateContactDto, photo?: Express.Multer.File) {
