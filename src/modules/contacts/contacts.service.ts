@@ -7,7 +7,6 @@ import { CreateContactDto } from './dtos/create-contact.dto';
 import { ContactMapper } from './mappers/contacts.mapper';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { FindContactDto } from './dtos/find-contact.dto';
-import { ContactDto } from './dtos/contact.dto';
 import { UpdateContact } from './dtos/update-contact.dto';
 import { ContactMethodsService } from './contact-methods.service';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
@@ -34,7 +33,13 @@ export class ContactsService {
     }
     const contacts = await this.contactsRepository.find({
       where: { id: params.contactId, board: { id: params.boardId, user: { id: userId } } },
-      relations: { board: true, jobApplications: true, contactEmails: true, contactPhones: true },
+      relations: {
+        board: true,
+        jobApplications: true,
+        emails: true,
+        phones: true,
+        companies: true,
+      },
       order: { createdAt: 'ASC' },
     });
     return contacts;
@@ -63,7 +68,7 @@ export class ContactsService {
 
     return this.contactsRepository.findOne({
       where: { id: contactEntity.id },
-      relations: { contactEmails: true, contactPhones: true, companies: true },
+      relations: { emails: true, phones: true, companies: true },
     });
   }
 

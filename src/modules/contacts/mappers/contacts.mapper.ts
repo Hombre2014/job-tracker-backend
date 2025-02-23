@@ -3,8 +3,6 @@ import { Contact } from '../entities/contact.entity';
 import { ContactDto } from '../dtos/contact.dto';
 import { BoardMapper } from '../../boards/boards.mapper';
 import { JobApplicationMapper } from '../../job-applications/job-applications.mapper';
-import { ContactEmailMapper } from './contact-email.mapper';
-import { ContactPhoneMapper } from './contact-phone.mapper';
 import { In, Repository } from 'typeorm';
 import { Board } from '../../boards/entities/board.entity';
 import { Company } from '../../companies/entities/company.entity';
@@ -16,8 +14,6 @@ export class ContactMapper {
     // For some reason I cannot Inject these mappers here
     const jobApplicationMapper = new JobApplicationMapper();
     const boardMapper = new BoardMapper();
-    const contactMethodEmailMapper = new ContactEmailMapper();
-    const contactMethodPhoneMapper = new ContactPhoneMapper();
 
     const dto = new ContactDto();
     dto.id = entity.id;
@@ -35,8 +31,8 @@ export class ContactMapper {
     dto.updatedAt = entity.updatedAt;
     dto.board = entity.board ? boardMapper.toDto(entity.board) : undefined;
     dto.jobApplications = entity.jobApplications?.map(jobApplicationMapper.toDto);
-    dto.emails = entity.contactEmails?.map(contactMethodEmailMapper.toDto);
-    dto.phones = entity.contactPhones?.map(contactMethodPhoneMapper.toDto);
+    dto.emails = entity.emails;
+    dto.phones = entity.phones;
     return dto;
   }
 

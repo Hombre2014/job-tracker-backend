@@ -45,7 +45,7 @@ export class JobApplicationsService {
       where: { column: { id: columnId } },
       relations: {
         notes: true,
-        contacts: { contactEmails: true, contactPhones: true },
+        contacts: { emails: true, phones: true },
         company: true,
       },
       order: { notes: { order: 'ASC' } },
@@ -172,7 +172,7 @@ export class JobApplicationsService {
     });
 
     if (jobApplication.company) {
-      await this.companiesRepository.delete(jobApplication.company);
+      await this.companiesRepository.delete({ id: jobApplication.company.id });
     }
 
     jobApplication.company = company;
