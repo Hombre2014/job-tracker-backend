@@ -31,4 +31,6 @@ export class ContactDto extends BaseDto {
   githubUrl: string;
 
   comment: string;
+
+  photoUrl: string;
 }
