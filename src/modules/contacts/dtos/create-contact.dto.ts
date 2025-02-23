@@ -42,6 +42,10 @@ export class CreateContactDto {
   @IsOptional()
   comment?: string;
 
+  @IsString()
+  @IsOptional()
+  location?: string;
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

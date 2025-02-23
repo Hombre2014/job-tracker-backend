@@ -52,4 +52,7 @@ export class Contact extends BaseEntity {
 
   @Column({ nullable: true })
   comment: string;
+
+  @Column({ nullable: true })
+  location: string;
 }

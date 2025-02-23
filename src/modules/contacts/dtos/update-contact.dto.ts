@@ -57,6 +57,10 @@ export class UpdateContact {
   @IsOptional()
   comment?: string;
 
+  @IsString()
+  @IsOptional()
+  location?: string;
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

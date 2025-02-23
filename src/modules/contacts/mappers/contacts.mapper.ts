@@ -33,6 +33,7 @@ export class ContactMapper {
     dto.jobApplications = entity.jobApplications?.map(jobApplicationMapper.toDto);
     dto.emails = entity.emails;
     dto.phones = entity.phones;
+    dto.location = entity.location;
     return dto;
   }
 

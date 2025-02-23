@@ -33,4 +33,6 @@ export class ContactDto extends BaseDto {
   comment: string;
 
   photoUrl: string;
+
+  location: string;
 }
