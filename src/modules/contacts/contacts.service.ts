@@ -83,7 +83,12 @@ export class ContactsService {
       const { url: photoUrl } = await this.appwriteUploadsService.uploadFile(photo);
       contactEntity.photoUrl = photoUrl;
     }
-    return this.contactsRepository.save(contactEntity);
+    await this.contactsRepository.save(contactEntity);
+
+    return this.contactsRepository.findOne({
+      where: { id: contactEntity.id },
+      relations: { emails: true, phones: true, companies: true },
+    });
   }
 
   async delete(contactId: string, userId: string) {

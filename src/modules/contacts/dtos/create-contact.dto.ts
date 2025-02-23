@@ -1,4 +1,4 @@
-import { IsArray, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, IsUrl, IsUUID, ValidateNested } from 'class-validator';
 import { ContactPhoneDto } from './contact-method/contact-phone.dto';
 import { ContactEmailDto } from './contact-method/contact-email.dto';
 import { Type } from 'class-transformer';
@@ -53,4 +53,8 @@ export class CreateContactDto {
   @ValidateNested({ each: true })
   @Type(() => ContactEmailDto)
   emails?: ContactEmailDto[];
+
+  @IsUrl()
+  @IsOptional()
+  photoUrl?: string;
 }

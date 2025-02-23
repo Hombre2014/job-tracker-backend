@@ -1,4 +1,12 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ContactPhoneDto } from './contact-method/contact-phone.dto';
 import { ContactEmailDto } from './contact-method/contact-email.dto';
@@ -19,6 +27,10 @@ export class UpdateContact {
   @IsOptional()
   @IsUUID()
   boardId?: string;
+
+  @IsOptional()
+  @IsUrl()
+  photoUrl?: string;
 
   @IsOptional()
   @IsArray()
