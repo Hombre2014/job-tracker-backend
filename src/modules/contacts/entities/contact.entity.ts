@@ -25,11 +25,11 @@ export class Contact extends BaseEntity {
   @JoinTable()
   jobApplications: JobApplication[];
 
-  @OneToMany(() => ContactEmail, (contactEmails) => contactEmails.contact)
-  contactEmails: ContactEmail[];
+  @OneToMany(() => ContactEmail, (email) => email.contact)
+  emails: ContactEmail[];
 
-  @OneToMany(() => ContactPhone, (contactPhones) => contactPhones.contact)
-  contactPhones: ContactPhone[];
+  @OneToMany(() => ContactPhone, (phone) => phone.contact)
+  phones: ContactPhone[];
 
   @ManyToMany(() => Company, (company) => company.contacts)
   @JoinTable()

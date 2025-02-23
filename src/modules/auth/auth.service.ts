@@ -26,12 +26,13 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    if (!user.isEmailVerified)
+    if (!user.isEmailVerified) {
       throw new CustomHttpException(
         'Email is not verified',
         HttpStatus.FORBIDDEN,
         UserFriendlyErrorMessages.EMAIL_NOT_VERIFIED,
       );
+    }
 
     return await this.generateTokens(user.id, user.email);
   }
