@@ -7,6 +7,9 @@
 /dist
 /node_modules
 
+# yarn
+yarn.lock
+
 # Multer dir for file uploads
 /uploads
 
