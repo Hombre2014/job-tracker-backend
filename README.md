@@ -61,3 +61,17 @@ yarn run migration:revert
 ### Create an empty migration
 ```bash
 yarn run migration:create {name}
+```
+
+### Remove all project related Docker data from the computer
+```bash
+docker-compose down -v --rmi all && docker system prune -a -f
+```
+
+### To run the project and rebuild everything while enabling watch mode
+```bash
+docker-compose up --build --watch
+```
+
+## Watch mode on WSL on Windows
+Don't clone the project to `/mnt/**/` folders. Clone to WSL native folders like `/home/<username>/projects/` instead.

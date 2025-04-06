@@ -25,8 +25,20 @@ services:
       - .env
     environment:
       - DB_HOST=postgres_dev
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     networks:
       - dev
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /usr/src/app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
 
 volumes:
   postgres_dev_data:
