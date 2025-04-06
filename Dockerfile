@@ -9,4 +9,4 @@ RUN yarn install && yarn build
 RUN apt-get update && apt-get install -f -y postgresql-client inotify-tools
 RUN chmod +x ./start.sh
 EXPOSE 3000
-CMD ["./start.sh"]
+CMD ["bash", "./start.sh"]

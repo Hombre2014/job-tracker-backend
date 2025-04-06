@@ -1,5 +1,4 @@
 #!/bin/bash
-# start.sh
 
 TIMEOUT=15 # TIMEOUT in seconds
 
