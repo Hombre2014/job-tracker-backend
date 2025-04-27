@@ -70,6 +70,30 @@ export class UserCodeVerificationService {
     return userCodeVerification.code;
   }
 
+  async createEmailResetVerificationCode(
+    userId: string,
+    processType: VerificationProcessType,
+  ): Promise<string> {
+    const code = this.generateCode();
+
+    const userCodeVerification = await this.userCodeVerificationRepository.create({
+      code: code,
+      process: processType,
+      user: { id: userId },
+    });
+    await this.userCodeVerificationRepository.save(userCodeVerification);
+    return userCodeVerification.code;
+  }
+
+  async createAndSendEmailResetVerificationCode(
+    userId: string,
+    email: string,
+    processType: VerificationProcessType,
+  ) {
+    const code = await this.createEmailResetVerificationCode(userId, processType);
+    await this.emailSender.sendVerificationEmail(email, code);
+  }
+
   async createAndSendVerificationCode(email: string, processType: VerificationProcessType) {
     const code = await this.createVerificationCode(email, processType);
     await this.emailSender.sendVerificationEmail(email, code);

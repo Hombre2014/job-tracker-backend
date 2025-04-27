@@ -26,6 +26,7 @@ import { DeleteUserDto } from './dtos/delete-user.dto';
 import { UpdatePasswordDto } from './dtos/update-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ResetEmailDto } from './dtos/reset-email.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -121,5 +122,25 @@ export class UsersController {
   @Post('/reset-password')
   async resetPassword(@Body() { email, code, newPassword }: ResetPasswordDto) {
     await this.usersService.resetPassword(email, code, newPassword);
+  }
+
+  @Post('/reset-email/create-verification-code')
+  async startEmailReset(
+    @AuthUser() { userId }: AuthUserDto,
+    @Body() { email: newEmail }: { email: string },
+  ) {
+    await this.codeVerification.createAndSendEmailResetVerificationCode(
+      userId,
+      newEmail,
+      VerificationProcess.USER_EMAIL_RESET,
+    );
+  }
+
+  @Post('/reset-email')
+  async resetEmail(
+    @AuthUser() { email }: AuthUserDto,
+    @Body() { code, email: newEmail }: ResetEmailDto,
+  ) {
+    await this.usersService.resetEmail(email, code, newEmail);
   }
 }
