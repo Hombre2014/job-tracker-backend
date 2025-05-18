@@ -6,13 +6,23 @@ import { JwtTokensDto } from './dtos/jwt-tokens.dto';
 import { ConfigService } from '@nestjs/config';
 import { UserFriendlyErrorMessages } from '../../exceptions/user-friendly-error-messages';
 import { CustomHttpException } from '../../exceptions/custom.exception';
+import { UserCodeVerificationService } from '../users/user-code-verification.service';
+import {
+  VerificationProcess,
+  VerificationProcessType,
+} from '../users/enums/verification-process.enum';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../users/entities/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly userCodeVerificationService: UserCodeVerificationService,
   ) {}
 
   async signIn(email: string, password: string): Promise<any> {
@@ -37,10 +47,10 @@ export class AuthService {
     return await this.generateTokens(user.id, user.email);
   }
 
-  async refreshToken(req: string): Promise<any> {
+  async refreshToken(token: string): Promise<any> {
     let payload = null;
     try {
-      payload = await this.jwtService.verifyAsync(req, {
+      payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('JWT_REFRESH_TOKEN'),
       });
     } catch (JsonWebTokenError) {
@@ -63,5 +73,32 @@ export class AuthService {
         expiresIn: '7d',
       }),
     });
+  }
+
+  async resetEmail(email: string, code: string, newEmail: string) {
+    await this.userCodeVerificationService.verifyUserCode(
+      { email },
+      code,
+      VerificationProcess.USER_EMAIL_RESET,
+    );
+
+    const user = await this.usersService.findOneBy({ email });
+
+    user.email = newEmail;
+    await this.usersRepository.save(user);
+
+    return this.generateTokens(user.id, newEmail);
+  }
+
+  async createAndSendEmailResetVerificationCode(
+    userId: string,
+    email: string,
+    processType: VerificationProcessType,
+  ) {
+    this.userCodeVerificationService.createAndSendEmailResetVerificationCode(
+      userId,
+      email,
+      processType,
+    );
   }
 }

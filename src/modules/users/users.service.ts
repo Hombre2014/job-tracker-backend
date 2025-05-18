@@ -126,17 +126,4 @@ export class UsersService {
     user.password = newPassword;
     await this.usersRepository.save(user);
   }
-
-  async resetEmail(email: string, code: string, newEmail: string) {
-    await this.userCodeVerificationService.verifyUserCode(
-      { email },
-      code,
-      VerificationProcess.USER_EMAIL_RESET,
-    );
-
-    const user = await this.findOneBy({ email });
-
-    user.email = newEmail;
-    await this.usersRepository.save(user);
-  }
 }

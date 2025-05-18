@@ -19,6 +19,6 @@ import { AppwriteUploadsModule } from '../appwrite-uploads/appwrite-uploads.modu
   ],
   controllers: [UsersController],
   providers: [UsersService, UserMapper, UserCodeVerificationService],
-  exports: [UsersService],
+  exports: [UsersService, UserCodeVerificationService],
 })
 export class UsersModule {}

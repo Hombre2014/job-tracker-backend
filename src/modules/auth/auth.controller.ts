@@ -13,6 +13,8 @@ import { SignInDto } from './dtos/sign-in.dto';
 import { Public } from './public.decorator';
 import { AuthUser } from './user.decorator';
 import { AuthUserDto } from './dtos/auth.user.dto';
+import { VerificationProcess } from '../users/enums/verification-process.enum';
+import { ResetEmailDto } from '../users/dtos/reset-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -39,5 +41,25 @@ export class AuthController {
   @Get('profile')
   getProfile(@AuthUser() user: AuthUserDto) {
     return user;
+  }
+
+  @Post('/reset-email/create-verification-code')
+  async startEmailReset(
+    @AuthUser() { userId }: AuthUserDto,
+    @Body() { email: newEmail }: { email: string },
+  ) {
+    await this.authService.createAndSendEmailResetVerificationCode(
+      userId,
+      newEmail,
+      VerificationProcess.USER_EMAIL_RESET,
+    );
+  }
+
+  @Post('/reset-email')
+  async resetEmail(
+    @AuthUser() { email }: AuthUserDto,
+    @Body() { code, email: newEmail }: ResetEmailDto,
+  ) {
+    return this.authService.resetEmail(email, code, newEmail);
   }
 }
