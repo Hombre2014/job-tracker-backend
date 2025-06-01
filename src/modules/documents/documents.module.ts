@@ -8,6 +8,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { User } from '../users/entities/user.entity';
 import { Board } from '../boards/entities/board.entity';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
+import { memoryStorage } from 'multer';
 
 @Module({
   controllers: [DocumentsController],
@@ -16,7 +17,7 @@ import { JobApplication } from '../job-applications/entities/job-application.ent
     AppwriteUploadsModule,
     TypeOrmModule.forFeature([Document, User, Board, JobApplication]),
     MulterModule.register({
-      dest: './uploads',
+      storage: memoryStorage(),
     }),
   ],
 })
