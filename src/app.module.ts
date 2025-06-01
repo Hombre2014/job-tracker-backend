@@ -14,6 +14,7 @@ import { JobApplicationNotesModule } from './modules/job-application-notes/job-a
 import { CompaniesModule } from './modules/companies/companies.module';
 import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     AppwriteUploadsModule,
     DocumentsModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_PIPE,
