@@ -2,6 +2,7 @@
 .env.development
 .env
 *.sqlite
+*.patch
 
 # compiled output
 /dist
