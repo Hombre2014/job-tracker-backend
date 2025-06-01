@@ -42,7 +42,7 @@ export const getDataSourceOptions = (): DataSourceOptions => ({
   migrationsRun: false,
   synchronize: false,
   logging: ['query', 'warn', 'error'],
-  ssl: true,
+  ssl: process.env.NODE_ENV !== 'local',
 });
 
 export default getDataSourceOptions;
