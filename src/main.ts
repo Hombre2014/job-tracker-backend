@@ -1,10 +1,14 @@
+import * as express from 'express';
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 
 import './utils/array.extensions';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+const expressServer = express();
+
+const createNestServer = async (expressInstance: express.Express) => {
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
   app.enableCors({
     credentials: true,
@@ -17,7 +21,11 @@ async function bootstrap() {
     ],
   });
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-}
-bootstrap();
+  return app.init();
+};
+
+createNestServer(expressServer)
+  .then(() => console.log('Nest Ready'))
+  .catch((err) => console.error('Nest broken', err));
+
+export default expressServer;
