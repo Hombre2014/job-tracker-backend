@@ -18,31 +18,60 @@ if (process.env.NODE_ENV !== 'test') {
   config({ path: '.env.test' });
 }
 
-export const getDataSourceOptions = (): DataSourceOptions => ({
-  type: 'postgres',
-  synchronize: false,
-  migrationsRun: false,
-  host: process.env.DB_HOST,
-  port: +process.env.DB_PORT,
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  logging: ['query', 'warn', 'error'],
-  migrations: ['dist/migrations/**/*.js'],
-  ssl: process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test', // Enable SSL for all remote environments
-  entities: [
-    User,
-    Board,
-    Contact,
-    Company,
-    Document,
-    BoardColumn,
-    ContactEmail,
-    ContactPhone,
-    JobApplication,
-    JobApplicationNote,
-    UserCodeVerification,
-  ],
-});
+export const getDataSourceOptions = (): DataSourceOptions => {
+  // Use individual parameters for local development (when DB_HOST is set)
+  if (process.env.DB_HOST) {
+    return {
+      type: 'postgres',
+      synchronize: false,
+      migrationsRun: false,
+      host: process.env.DB_HOST,
+      port: +process.env.DB_PORT,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      logging: ['query', 'warn', 'error'],
+      migrations: ['dist/migrations/**/*.js'],
+      ssl: process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test',
+      entities: [
+        User,
+        Board,
+        Contact,
+        Company,
+        Document,
+        BoardColumn,
+        ContactEmail,
+        ContactPhone,
+        JobApplication,
+        JobApplicationNote,
+        UserCodeVerification,
+      ],
+    };
+  }
+
+  // Use DATABASE_URL for production (when DB_HOST is not set)
+  return {
+    type: 'postgres',
+    synchronize: false,
+    migrationsRun: false,
+    url: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    logging: ['query', 'warn', 'error'],
+    migrations: ['dist/migrations/**/*.js'],
+    entities: [
+      User,
+      Board,
+      Contact,
+      Company,
+      Document,
+      BoardColumn,
+      ContactEmail,
+      ContactPhone,
+      JobApplication,
+      JobApplicationNote,
+      UserCodeVerification,
+    ],
+  };
+};
 
 export default getDataSourceOptions;
