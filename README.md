@@ -1,21 +1,30 @@
+# Job Tracker Backend
+
+Job Tracker Backend is a Nest.js application designed to manage job tracking efficiently. It utilizes TypeScript, Nest.js framework, and PostgreSQL for database interactions.
+
 ## Prerequisites
+
 1. Node 21
 2. Docker
 
 ## Start Postgres DB
+
 ```bash
 docker compose up postgres_dev
 ```
 
 ## Build API
+
 ```bash
 yarn install
 ```
 
 ## Configuration
+
 Create `.env` file in the root directory. Copy and populate all content from `.env.example` file.
 
 ## Run DB migration
+
 You might need to run the app before running this command.
 
 ```bash
@@ -49,29 +58,37 @@ yarn run test:cov
 ```
 
 ## How to
+
 ### Create a new DB migration
+
 ```bash
 yarn run migration:generate {name}
 ```
+
 ### Revert the last migration
+
 ```bash
 yarn run migration:revert
 ```
 
 ### Create an empty migration
+
 ```bash
 yarn run migration:create {name}
 ```
 
 ### Remove all project related Docker data from the computer
+
 ```bash
 docker-compose down -v --rmi all && docker system prune -a -f
 ```
 
 ### To run the project and rebuild everything while enabling watch mode
+
 ```bash
 docker-compose up --build --watch
 ```
 
 ## Watch mode on WSL on Windows
+
 Don't clone the project to `/mnt/**/` folders. Clone to WSL native folders like `/home/<username>/projects/` instead.
