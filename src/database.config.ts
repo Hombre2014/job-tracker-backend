@@ -22,6 +22,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
   // Use individual parameters for local development (when DB_HOST is set)
   if (process.env.DB_HOST) {
     return {
+      ssl: false, // Local database doesn't use SSL
       type: 'postgres',
       synchronize: false,
       migrationsRun: false,
@@ -32,7 +33,6 @@ export const getDataSourceOptions = (): DataSourceOptions => {
       database: process.env.DB_DATABASE,
       logging: ['query', 'warn', 'error'],
       migrations: ['dist/migrations/**/*.js'],
-      ssl: process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test',
       entities: [
         User,
         Board,

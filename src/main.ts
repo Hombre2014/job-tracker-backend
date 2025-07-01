@@ -24,8 +24,22 @@ const createNestServer = async (expressInstance: express.Express) => {
   return app.init();
 };
 
-createNestServer(expressServer)
-  .then(() => console.log('Nest Ready'))
-  .catch((err) => console.error('Nest broken', err));
+// For local development
+if (require.main === module) {
+  createNestServer(expressServer)
+    .then(async () => {
+      console.log('Nest Ready');
+      const port = process.env.PORT || 3000;
+      expressServer.listen(port, () => {
+        console.log(`Application is running on: http://localhost:${port}`);
+      });
+    })
+    .catch((err) => console.error('Nest broken', err));
+} else {
+  // For serverless deployment
+  createNestServer(expressServer)
+    .then(() => console.log('Nest Ready'))
+    .catch((err) => console.error('Nest broken', err));
+}
 
 export default expressServer;
