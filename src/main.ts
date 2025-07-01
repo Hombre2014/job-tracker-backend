@@ -1,23 +1,31 @@
+import * as express from 'express';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import './utils/array.extensions';
+import { ExpressAdapter } from '@nestjs/platform-express';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+import './utils/array.extensions';
+import { AppModule } from './app.module';
+
+const expressServer = express();
+
+const createNestServer = async (expressInstance: express.Express) => {
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
   app.enableCors({
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://job-tracker-git-develop-dans-projects-fd64ea5d.vercel.app',
       'https://online-job-trackr.vercel.app',
-      'http://localhost:5173', // Vite default port
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    credentials: true,
   });
 
-  await app.listen(3000);
-}
-bootstrap();
+  return app.init();
+};
+
+createNestServer(expressServer)
+  .then(() => console.log('Nest Ready'))
+  .catch((err) => console.error('Nest broken', err));
+
+export default expressServer;
