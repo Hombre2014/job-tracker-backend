@@ -32,7 +32,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       logging: ['query', 'warn', 'error'],
-      migrations: ['dist/migrations/**/*.js'],
+      migrations: ['dist/src/migrations/**/*.js'],
       entities: [
         User,
         Board,
@@ -57,7 +57,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
     url: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
     logging: ['query', 'warn', 'error'],
-    migrations: ['dist/migrations/**/*.js'],
+    migrations: ['dist/src/migrations/**/*.js'],
     entities: [
       User,
       Board,
