@@ -44,7 +44,7 @@ export class DocumentsService {
   async findOneById(id: string, userId: string): Promise<Document> {
     const document = await this.documentsRepository.findOne({
       where: { id, user: { id: userId } },
-      relations: { board: true },
+      relations: { board: true, jobApplications: { column: { board: true } } },
     });
 
     if (!document) {
