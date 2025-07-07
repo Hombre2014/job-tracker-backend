@@ -57,7 +57,7 @@ export class JobApplicationsService {
   async findOneById(id: string, userId: string): Promise<JobApplication> {
     return this.jobApplicationsRepository.findOneOrFail({
       where: { id, column: { board: { user: { id: userId } } } },
-      relations: { column: true, notes: true, contacts: true, company: true },
+      relations: { column: true, notes: true, contacts: true, company: { contacts: true } },
     });
   }
 
@@ -138,7 +138,12 @@ export class JobApplicationsService {
       err = error;
     } finally {
       if (!err && jobApplication.company) {
-        await this.companiesRepository.delete({ id: jobApplication.company.id });
+        if (
+          jobApplication.company.contacts === undefined ||
+          jobApplication.company.contacts.length === 0
+        ) {
+          await this.companiesRepository.delete({ id: jobApplication.company.id });
+        }
       }
     }
   }
