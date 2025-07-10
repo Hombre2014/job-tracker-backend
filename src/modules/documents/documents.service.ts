@@ -188,4 +188,20 @@ export class DocumentsService {
 
     return this.documentsRepository.remove(document);
   }
+
+  getAllDocumentsPerBoard(boardId: string, userId: string) {
+    return this.documentsRepository.find({
+      where: { board: { id: boardId }, user: { id: userId } },
+      relations: { jobApplications: { column: { board: true } } },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  getAllDocumentPerUser(userId: string) {
+    return this.documentsRepository.find({
+      where: { user: { id: userId } },
+      relations: { jobApplications: { column: { board: true } } },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

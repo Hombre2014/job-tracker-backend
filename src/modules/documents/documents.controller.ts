@@ -32,6 +32,11 @@ export class DocumentsController {
     return this.documentsService.create(file, createDocumentDto, userId);
   }
 
+  @Get('/user')
+  async findByUser(@AuthUser() { userId }: AuthUserDto) {
+    return this.documentsService.getAllDocumentPerUser(userId);
+  }
+
   @Get('/:id')
   async findOneById(@Param('id') id: string, @AuthUser() { userId }: AuthUserDto) {
     return this.documentsService.findOneById(id, userId);
@@ -40,6 +45,11 @@ export class DocumentsController {
   @Get()
   async findBy(@Query() query: Pagination, @AuthUser() { userId }: AuthUserDto) {
     return this.documentsService.findAndPaginate(query, userId);
+  }
+
+  @Get('/board/:boardId')
+  async findByBoardId(@Param('boardId') boardId: string, @AuthUser() { userId }: AuthUserDto) {
+    return this.documentsService.getAllDocumentsPerBoard(boardId, userId);
   }
 
   @Post('/:id/job-application/:jobId/attach')
