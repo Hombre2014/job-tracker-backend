@@ -33,4 +33,6 @@ export class JobApplicationDto extends BaseDto {
   statusChangedAt: string;
 
   status: JobApplicationStatus;
+
+  documents: any[];
 }
