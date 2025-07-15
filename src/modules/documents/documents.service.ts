@@ -26,7 +26,13 @@ export class DocumentsService {
 
     const { url } = await this.appwriteUploadsService.uploadFile(file);
 
-    const createDocumentPayload = { url, user };
+    // Handle potential undefined file.size with fallback to null
+    const fileSize = file.size !== undefined ? file.size : null;
+    if (fileSize === null) {
+      console.warn('File size is undefined for uploaded file:', file.originalname);
+    }
+
+    const createDocumentPayload = { url, user, fileSize };
 
     Object.assign(createDocumentPayload, createDocumentDto);
 
@@ -169,7 +175,13 @@ export class DocumentsService {
 
     const { url } = await this.appwriteUploadsService.uploadFile(file);
 
-    Object.assign(document, { url, ...updateDocumentDto });
+    // Handle potential undefined file.size with fallback to null
+    const fileSize = file.size !== undefined ? file.size : null;
+    if (fileSize === null) {
+      console.warn('File size is undefined for updated file. Document ID:', documentId);
+    }
+
+    Object.assign(document, { url, fileSize, ...updateDocumentDto });
 
     return this.documentsRepository.save(document);
   }
