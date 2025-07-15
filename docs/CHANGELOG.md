@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supports file sizes from 0 bytes to PostgreSQL bigint limit
 - TypeORM entity validation ensures data integrity
 - No breaking changes to existing API contracts
+- **Error Handling**: Graceful fallback to `null` if `file.size` is undefined, with warning logs for debugging
 
 ### Affected Endpoints
 
