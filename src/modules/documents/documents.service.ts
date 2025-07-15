@@ -26,7 +26,7 @@ export class DocumentsService {
 
     const { url } = await this.appwriteUploadsService.uploadFile(file);
 
-    const createDocumentPayload = { url, user };
+    const createDocumentPayload = { url, user, fileSize: file.size };
 
     Object.assign(createDocumentPayload, createDocumentDto);
 
@@ -169,7 +169,7 @@ export class DocumentsService {
 
     const { url } = await this.appwriteUploadsService.uploadFile(file);
 
-    Object.assign(document, { url, ...updateDocumentDto });
+    Object.assign(document, { url, fileSize: file.size, ...updateDocumentDto });
 
     return this.documentsRepository.save(document);
   }
