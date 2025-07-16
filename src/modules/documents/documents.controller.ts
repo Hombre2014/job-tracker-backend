@@ -82,11 +82,11 @@ export class DocumentsController {
   @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('id') documentId: string,
-    @UploadedFile() file: Express.Multer.File,
     @Body() updateDocumentDto: UpdateDocumentDto,
     @AuthUser() { userId }: AuthUserDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    this.documentsService.update(file, documentId, updateDocumentDto, userId);
+    this.documentsService.update(documentId, updateDocumentDto, userId, file);
   }
 
   @Delete('/:id')

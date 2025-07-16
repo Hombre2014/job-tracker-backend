@@ -157,10 +157,10 @@ export class DocumentsService {
   }
 
   async update(
-    file: Express.Multer.File,
     documentId: string,
     updateDocumentDto: UpdateDocumentDto,
     userId: string,
+    file?: Express.Multer.File,
   ) {
     const document = await this.documentsRepository.findOne({
       where: {
@@ -173,15 +173,19 @@ export class DocumentsService {
       throw new NotFoundException('Document with given id and belonging to given user not found');
     }
 
-    const { url } = await this.appwriteUploadsService.uploadFile(file);
+    if (file) {
+      const { url } = await this.appwriteUploadsService.uploadFile(file);
 
-    // Handle potential undefined file.size with fallback to null
-    const fileSize = file.size !== undefined ? file.size : null;
-    if (fileSize === null) {
-      console.warn('File size is undefined for updated file. Document ID:', documentId);
+      // Handle potential undefined file.size with fallback to null
+      const fileSize = file.size !== undefined ? file.size : null;
+      if (fileSize === null) {
+        console.warn('File size is undefined for updated file. Document ID:', documentId);
+      }
+
+      Object.assign(document, { url, fileSize });
     }
 
-    Object.assign(document, { url, fileSize, ...updateDocumentDto });
+    Object.assign(document, updateDocumentDto);
 
     return this.documentsRepository.save(document);
   }
