@@ -10,6 +10,10 @@ import { Pagination } from './dtos/pagination';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { UpdateDocumentDto } from './dtos/update-document.dto';
 
+const getFileExtension = (fileName: string) => {
+  return fileName.indexOf('.') >= 0 ? fileName.split('.').pop() : null;
+};
+
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -32,8 +36,7 @@ export class DocumentsService {
       console.warn('File size is undefined for uploaded file:', file.originalname);
     }
 
-    const fileExtension =
-      file.originalname.indexOf('.') >= 0 ? file.originalname.split('.').pop() : null;
+    const fileExtension = getFileExtension(file.originalname);
 
     const createDocumentPayload = { url, user, fileSize, fileExtension };
 
@@ -185,8 +188,7 @@ export class DocumentsService {
         console.warn('File size is undefined for updated file. Document ID:', documentId);
       }
 
-      const fileExtension =
-        file.originalname.indexOf('.') >= 0 ? file.originalname.split('.').pop() : null;
+      const fileExtension = getFileExtension(file.originalname);
 
       Object.assign(document, { url, fileSize, fileExtension });
     }
