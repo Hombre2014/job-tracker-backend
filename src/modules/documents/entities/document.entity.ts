@@ -30,6 +30,9 @@ export class Document extends BaseEntity {
   @Column({ type: 'bigint', nullable: true })
   fileSize?: number;
 
+  @Column({ nullable: true })
+  fileExtension?: string;
+
   @ManyToOne(() => Board, (board) => board.documents, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'board_id' })
   board?: Board;
