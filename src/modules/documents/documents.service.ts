@@ -32,7 +32,10 @@ export class DocumentsService {
       console.warn('File size is undefined for uploaded file:', file.originalname);
     }
 
-    const createDocumentPayload = { url, user, fileSize };
+    const fileExtension =
+      file.originalname.indexOf('.') >= 0 ? file.originalname.split('.').pop() : null;
+
+    const createDocumentPayload = { url, user, fileSize, fileExtension };
 
     Object.assign(createDocumentPayload, createDocumentDto);
 
@@ -182,7 +185,10 @@ export class DocumentsService {
         console.warn('File size is undefined for updated file. Document ID:', documentId);
       }
 
-      Object.assign(document, { url, fileSize });
+      const fileExtension =
+        file.originalname.indexOf('.') >= 0 ? file.originalname.split('.').pop() : null;
+
+      Object.assign(document, { url, fileSize, fileExtension });
     }
 
     Object.assign(document, updateDocumentDto);
