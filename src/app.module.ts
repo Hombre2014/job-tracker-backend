@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
 import { UsersModule } from './modules/users/users.module';
@@ -15,8 +15,6 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AppController } from './app.controller';
-import { CacheControlMiddleware } from './cache-control.middleware';
-
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -45,8 +43,4 @@ import { CacheControlMiddleware } from './cache-control.middleware';
     },
   ],
 })
-export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CacheControlMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

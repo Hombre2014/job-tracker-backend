@@ -4,6 +4,7 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 
 import './utils/array.extensions';
 import { AppModule } from './app.module';
+import { CacheControlMiddleware } from './cache-control.middleware';
 
 const expressServer = express();
 
@@ -20,6 +21,8 @@ const createNestServer = async (expressInstance: express.Express) => {
       'https://online-job-trackr.vercel.app',
     ],
   });
+
+  app.use(new CacheControlMiddleware().use);
 
   return app.init();
 };
