@@ -86,7 +86,7 @@ export class DocumentsController {
     @AuthUser() { userId }: AuthUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    this.documentsService.update(documentId, updateDocumentDto, userId, file);
+    return this.documentsService.update(documentId, updateDocumentDto, userId, file);
   }
 
   @Delete('/:id')
