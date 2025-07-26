@@ -66,11 +66,11 @@ export class AuthService {
     return new JwtTokensDto({
       accessToken: await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_ACCESS_TOKEN'),
-        expiresIn: '1h',
+        expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h'),
       }),
       refreshToken: await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_REFRESH_TOKEN'),
-        expiresIn: '7d',
+        expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d'),
       }),
     });
   }
