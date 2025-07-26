@@ -28,7 +28,7 @@ export class AuthController {
   }
 
   @Public()
-  @Get('refresh')
+  @Post('refresh')
   async refreshToken(@Request() req: any) {
     const [type, token] = req.headers.authorization?.split(' ') ?? [];
     if (type !== 'Bearer' || !token) {
