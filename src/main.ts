@@ -5,6 +5,7 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import './utils/array.extensions';
 import { AppModule } from './app.module';
 import { CacheControlMiddleware } from './cache-control.middleware';
+import * as cookieParser from 'cookie-parser';
 
 const expressServer = express();
 
@@ -23,6 +24,7 @@ const createNestServer = async (expressInstance: express.Express) => {
   });
 
   app.use(new CacheControlMiddleware().use);
+  app.use(cookieParser());
 
   return app.init();
 };
