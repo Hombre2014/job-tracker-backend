@@ -28,7 +28,7 @@ export class AppwriteUploadsService {
       const { $id: fileId, name: fileName } = await this.storage.createFile(
         this.bucketId,
         'unique()',
-        new File([fileBuffer], file.originalname, { type: file.mimetype }),
+        new File([fileBuffer as BlobPart], file.originalname, { type: file.mimetype }),
       );
 
       console.log('File uploaded successfully:', fileName);
