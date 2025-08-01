@@ -31,36 +31,19 @@ export class AuthController {
   @Post('login')
   async signIn(@Body() signInDto: SignInDto, @Res() res: any) {
     const tokens = await this.authService.signIn(signInDto.email, signInDto.password);
-
-    const accessExpiration = this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h');
-    const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '1h');
-
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production', // only over HTTPS
-      sameSite: 'strict',
-      maxAge: ms(accessExpiration),
-    });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production', // only over HTTPS
-      sameSite: 'strict',
-      maxAge: ms(refreshExpiration),
-    });
-
-    return res.status(HttpStatus.OK).json();
+    return this.returnTokensInCookies(res, tokens);
   }
 
   @Public()
   @Post('refresh')
-  async refreshToken(@Request() req: any) {
+  async refreshToken(@Request() req: any, @Res() res: any) {
     const [type, token] = req.headers.authorization?.split(' ') ?? [];
     if (type !== 'Bearer' || !token) {
       throw new UnauthorizedException();
     }
 
-    return this.authService.refreshToken(token);
+    const tokens = await this.authService.refreshToken(token);
+    return this.returnTokensInCookies(res, tokens);
   }
 
   @Get('profile')
@@ -86,5 +69,26 @@ export class AuthController {
     @Body() { code, email: newEmail }: ResetEmailDto,
   ) {
     return this.authService.resetEmail(email, code, newEmail);
+  }
+
+  private returnTokensInCookies(res: any, tokens: { accessToken: string; refreshToken: string }) {
+    const accessExpiration = this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h');
+    const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '1h');
+
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production', // only over HTTPS
+      sameSite: 'strict',
+      maxAge: ms(accessExpiration),
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production', // only over HTTPS
+      sameSite: 'strict',
+      maxAge: ms(refreshExpiration),
+    });
+
+    return res.status(HttpStatus.OK).json();
   }
 }
