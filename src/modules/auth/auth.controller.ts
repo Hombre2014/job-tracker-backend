@@ -37,8 +37,8 @@ export class AuthController {
   @Public()
   @Post('refresh')
   async refreshToken(@Request() req: any, @Res() res: any) {
-    const [type, token] = req.headers.authorization?.split(' ') ?? [];
-    if (type !== 'Bearer' || !token) {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
       throw new UnauthorizedException();
     }
 
