@@ -73,7 +73,7 @@ export class AuthController {
 
   private returnTokensInCookies(res: any, tokens: { accessToken: string; refreshToken: string }) {
     const accessExpiration = this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h');
-    const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '1h');
+    const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d');
     const secure = this.configService.get('NODE_ENV') === 'production'; // only over HTTPS
 
     res.cookie('accessToken', tokens.accessToken, {
@@ -81,6 +81,7 @@ export class AuthController {
       secure: secure,
       sameSite: 'strict',
       maxAge: ms(accessExpiration),
+      path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
