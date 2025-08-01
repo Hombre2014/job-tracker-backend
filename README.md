@@ -2,30 +2,37 @@
 
 Job Tracker Backend is a Nest.js application designed to manage job tracking efficiently. It utilizes TypeScript, Nest.js framework, and PostgreSQL for database interactions.
 
+## Frontend repository
+[Job Tracker Frontend](https://github.com/Hombre2014/job-tracker-frontend)
+
 ## Prerequisites
 
-1. Node 21
+### Required Software
+
+1. Node 21 (or later)
 2. Docker
 
-## Start Postgres DB
+### Configuration
+
+Create `.env` file in the root directory. Copy and populate all content from `.env.example` file. Make sure .env file is full filled (including db credentials).
+
+### Build API
+
+```bash
+yarn install
+yarn build
+```
+
+### Start Postgres DB
 
 ```bash
 docker compose up postgres_dev
 ```
 
-## Build API
+### Run DB migration
 
-```bash
-yarn install
-```
-
-## Configuration
-
-Create `.env` file in the root directory. Copy and populate all content from `.env.example` file.
-
-## Run DB migration
-
-You might need to run the app before running this command.
+Make sure all previous steps are completed.
+If you have added a new migration, you may need to run the application before running this command.
 
 ```bash
 yarn run typeorm migration:run -d src/data-source.ts
