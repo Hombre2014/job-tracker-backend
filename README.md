@@ -10,11 +10,12 @@ Job Tracker Backend is a Nest.js application designed to manage job tracking eff
 ### Required Software
 
 1. Node 21 (or later)
-2. Docker
+2. yarn
+3. Docker
 
 ### Configuration
 
-Create `.env` file in the root directory. Copy and populate all content from `.env.example` file. Make sure .env file is full filled (including db credentials).
+Create `.env` file in the root directory. Copy and populate all content from `.env.example` file. Make sure `.env` file is full filled (including db credentials).
 
 ### Build API
 
