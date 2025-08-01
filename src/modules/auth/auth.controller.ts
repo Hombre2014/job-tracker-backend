@@ -17,7 +17,7 @@ import { AuthUserDto } from './dtos/auth.user.dto';
 import { VerificationProcess } from '../users/enums/verification-process.enum';
 import { ResetEmailDto } from '../users/dtos/reset-email.dto';
 import { ConfigService } from '@nestjs/config';
-import ms = require('ms');
+import * as ms from 'ms';
 
 @Controller('auth')
 export class AuthController {
