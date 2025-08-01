@@ -3,6 +3,7 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import express from 'express';
 import { AppModule } from '../src/app.module';
+import * as cookieParser from 'cookie-parser';
 
 let app: any;
 
@@ -24,6 +25,7 @@ async function bootstrap() {
 
     await nestApp.init();
     app = expressServer;
+    app.use(cookieParser());
   }
   return app;
 }
