@@ -15,6 +15,8 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AppController } from './app.controller';
+import { NotificationModule } from './modules/notification/notification.module';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -32,6 +34,7 @@ import { AppController } from './app.controller';
     CompaniesModule,
     AppwriteUploadsModule,
     DocumentsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
