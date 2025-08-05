@@ -5,7 +5,8 @@
     },
     "cSpell.words": [
         "dtos",
-        "typeorm"
+        "typeorm",
+        "appwrite"
     ],
     // "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
