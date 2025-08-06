@@ -27,7 +27,7 @@ yarn build
 ### Start Postgres DB
 
 ```bash
-docker compose up postgres_dev
+docker compose up -d postgres_dev
 ```
 
 ### Run DB migration
