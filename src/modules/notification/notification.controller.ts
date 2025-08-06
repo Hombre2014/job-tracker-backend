@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
 import { AuthUser } from '../auth/user.decorator';
 import { NotificationService } from './notification.service';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
@@ -8,6 +8,16 @@ import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto'
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
+
+  @Get('daily-report')
+  getDailyNotification(@AuthUser() user: AuthUserDto) {
+    return this.notificationService.getDailyNotification(user.userId);
+  }
+
+  @Get('weekly-report')
+  getWeeklyNotification(@AuthUser() user: AuthUserDto) {
+    return this.notificationService.getWeeklyNotification(user.userId);
+  }
 
   @Post('daily-report')
   createDailyNotification(
@@ -30,8 +40,7 @@ export class NotificationController {
     @Body() notification: CreateDailyNotification,
     @AuthUser() user: AuthUserDto,
   ) {
-    this.notificationService.deleteDailyNotification(user.userId);
-    return this.notificationService.createDailyNotification(notification, user.userId);
+    return this.notificationService.updateDailyNotification(notification, user.userId);
   }
 
   @Put('weekly-report')
@@ -39,8 +48,7 @@ export class NotificationController {
     @Body() notification: CreateWeeklyNotification,
     @AuthUser() user: AuthUserDto,
   ) {
-    this.notificationService.deleteWeeklyNotification(user.userId);
-    return this.notificationService.createWeeklyNotification(notification, user.userId);
+    return this.notificationService.updateWeeklyNotification(notification, user.userId);
   }
 
   @Delete('daily-report')

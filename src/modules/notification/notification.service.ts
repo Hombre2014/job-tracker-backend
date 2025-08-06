@@ -1,23 +1,116 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateDailyNotification } from './dtos/create-daily-notification.dto';
+import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto';
+import { NotificationSetting } from './entities/notification-setting.entity';
+import { ReportNotificationEnum } from './enums/report-notification.enum';
+import { NotificationAlreadyExistsException } from './exceptions/norification-exists.exception';
 
 @Injectable()
 export class NotificationService {
-  createDailyNotification(notification: any, userId: any) {
-    console.log('Creating daily notification for user:', userId);
-    console.log('Notification details:', notification);
-    throw new Error('Method not implemented.');
+  constructor(
+    @InjectRepository(NotificationSetting)
+    private readonly notificationRepository: Repository<NotificationSetting>,
+  ) {}
+
+  async createDailyNotification(notification: CreateDailyNotification, userId: string) {
+    const existingNotification = await this.notificationRepository.existsBy({
+      user: { id: userId },
+      type: ReportNotificationEnum.DAILY,
+    });
+
+    if (existingNotification) {
+      throw new NotificationAlreadyExistsException(
+        'Daily notification already exists for this user',
+      );
+    }
+
+    const entity = this.notificationRepository.create({
+      user: { id: userId },
+      time: notification.time,
+      type: ReportNotificationEnum.DAILY,
+    });
+
+    return this.notificationRepository.save(entity);
   }
-  createWeeklyNotification(notification: any, userId: string) {
-    console.log('Creating weekly notification for user:', userId);
-    console.log('Notification details:', notification);
-    throw new Error('Method not implemented.');
+
+  async createWeeklyNotification(notification: CreateWeeklyNotification, userId: string) {
+    const existingNotification = await this.notificationRepository.existsBy({
+      user: { id: userId },
+      type: ReportNotificationEnum.DAILY,
+    });
+
+    if (existingNotification) {
+      throw new NotificationAlreadyExistsException(
+        'Weekly notification already exists for this user',
+      );
+    }
+
+    const entity = this.notificationRepository.create({
+      user: { id: userId },
+      time: notification.time,
+      dayOfWeek: notification.dayOfWeek,
+      type: ReportNotificationEnum.WEEKLY,
+    });
+
+    return this.notificationRepository.save(entity);
   }
-  deleteDailyNotification(userId: string) {
-    console.log('Deleting daily notification for user:', userId);
-    throw new Error('Method not implemented.');
+
+  async getDailyNotification(userId: string) {
+    return this.notificationRepository.findOne({
+      where: { user: { id: userId }, type: ReportNotificationEnum.DAILY },
+    });
   }
-  deleteWeeklyNotification(userId: string) {
-    console.log('Deleting weekly notification for user:', userId);
-    throw new Error('Method not implemented.');
+
+  async getWeeklyNotification(userId: string) {
+    return this.notificationRepository.findOne({
+      where: { user: { id: userId }, type: ReportNotificationEnum.WEEKLY },
+    });
+  }
+
+  async updateDailyNotification(notification: CreateDailyNotification, userId: string) {
+    const entity = await this.notificationRepository.findOne({
+      where: { user: { id: userId }, type: ReportNotificationEnum.DAILY },
+    });
+    if (!entity) {
+      throw new NotFoundException('Daily notification not found');
+    }
+    entity.time = notification.time;
+    return this.notificationRepository.save(entity);
+  }
+
+  async updateWeeklyNotification(notification: CreateWeeklyNotification, userId: string) {
+    const entity = await this.notificationRepository.findOne({
+      where: { user: { id: userId }, type: ReportNotificationEnum.WEEKLY },
+    });
+    if (!entity) {
+      throw new NotFoundException('Weekly notification not found');
+    }
+    entity.time = notification.time;
+    entity.dayOfWeek = notification.dayOfWeek;
+    return this.notificationRepository.save(entity);
+  }
+
+  async deleteDailyNotification(userId: string) {
+    const result = await this.notificationRepository.delete({
+      user: { id: userId },
+      type: ReportNotificationEnum.DAILY,
+    });
+    if (result.affected === 0) {
+      throw new NotFoundException('Daily notification not found');
+    }
+    return true;
+  }
+
+  async deleteWeeklyNotification(userId: string) {
+    const result = await this.notificationRepository.delete({
+      user: { id: userId },
+      type: ReportNotificationEnum.WEEKLY,
+    });
+    if (result.affected === 0) {
+      throw new NotFoundException('Weekly notification not found');
+    }
+    return true;
   }
 }
