@@ -6,8 +6,9 @@ import { Check, Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 
 @Entity('notification_settings')
 @Check(`("type" != '${ReportNotificationEnum.WEEKLY}') OR ("day_of_week" IS NOT NULL)`)
-@Unique('UN_NOTIFICATION_TYPE_PER_USER', ['user', 'type'])
 @Check(`"time" ~ '^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$'`)
+@Check('"timezone_offset" >= -840 AND "timezone_offset" <= 720')
+@Unique('UN_NOTIFICATION_TYPE_PER_USER', ['user', 'type'])
 export class NotificationSetting extends BaseEntity {
   @ManyToOne(() => User, (user) => user.notificationSettings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
@@ -15,6 +16,9 @@ export class NotificationSetting extends BaseEntity {
 
   @Column({ length: 5 }) // HH:mm format
   time: string;
+
+  @Column({ name: 'timezone_offset', type: 'int' })
+  timezoneOffset: number;
 
   @Column({
     name: 'day_of_week',

@@ -29,6 +29,7 @@ export class NotificationService {
     const entity = this.notificationRepository.create({
       user: { id: userId },
       time: notification.time,
+      timezoneOffset: notification.timezoneOffset,
       type: ReportNotificationEnum.DAILY,
     });
 
@@ -50,6 +51,7 @@ export class NotificationService {
     const entity = this.notificationRepository.create({
       user: { id: userId },
       time: notification.time,
+      timezoneOffset: notification.timezoneOffset,
       dayOfWeek: notification.dayOfWeek,
       type: ReportNotificationEnum.WEEKLY,
     });
@@ -77,6 +79,7 @@ export class NotificationService {
       throw new NotFoundException('Daily notification not found');
     }
     entity.time = notification.time;
+    entity.timezoneOffset = notification.timezoneOffset;
     return this.notificationRepository.save(entity);
   }
 
@@ -89,6 +92,7 @@ export class NotificationService {
     }
     entity.time = notification.time;
     entity.dayOfWeek = notification.dayOfWeek;
+    entity.timezoneOffset = notification.timezoneOffset;
     return this.notificationRepository.save(entity);
   }
 
