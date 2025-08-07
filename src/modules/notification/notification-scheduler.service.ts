@@ -1,30 +1,46 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { DayOfWeekEnum, DayOfWeekType } from './enums/day-of-week.enum';
 
 @Injectable()
 export class NotificationSchedulerService {
-  private readonly logger = new Logger(NotificationSchedulerService.name);
-
   constructor(
     @InjectRepository(NotificationSchedule)
-    private readonly notificationSettingRepo: Repository<NotificationSchedule>,
+    private readonly notificationRepository: Repository<NotificationSchedule>,
   ) {}
 
   // Runs every minute
   @Cron('*/1 * * * *')
   async handleCron() {
-    const settings = await this.notificationSettingRepo.find({ relations: ['user'] });
+    const settings = await this.notificationRepository.find({ relations: ['user'] });
     for (const setting of settings) {
       const nextTime = this.calculateNextNotificationTime(setting);
       console.error(
         `Next notification for user ${setting.user.id} (type: ${setting.type}): ${nextTime.toISOString()}`,
       );
     }
+  }
+
+  // Runs every hour
+  @Cron('0 */1 * * *')
+  async rescheduleExpiredNotifications() {
+    const dayAgo = new Date();
+    dayAgo.setDate(dayAgo.getDate() - 1);
+    await this.notificationRepository
+      .findBy({
+        scheduledTime: LessThan(dayAgo),
+      })
+      .then((notifications) => {
+        notifications.forEach(async (notification) => {
+          notification.scheduledTime = this.calculateNextNotificationTime(notification);
+          await this.notificationRepository.save(notification);
+          console.warn(`Rescheduled expired notification id: ${notification.id}`);
+        });
+      });
   }
 
   calculateNextNotificationTime(setting: NotificationSchedule): Date {
