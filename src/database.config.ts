@@ -11,7 +11,7 @@ import { BoardColumn } from './modules/board-columns/entities/board-column.entit
 import { JobApplication } from './modules/job-applications/entities/job-application.entity';
 import { UserCodeVerification } from './modules/users/entities/user.code.verification.entity';
 import { JobApplicationNote } from './modules/job-application-notes/entities/job-application-note.entity';
-import { NotificationSetting } from './modules/notification/entities/notification-setting.entity';
+import { NotificationSchedule } from './modules/notification/entities/notification-schedule.entity';
 
 if (process.env.NODE_ENV !== 'test') {
   config();
@@ -46,7 +46,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
         JobApplication,
         JobApplicationNote,
         UserCodeVerification,
-        NotificationSetting,
+        NotificationSchedule,
       ],
     };
   }
@@ -72,7 +72,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
       JobApplication,
       JobApplicationNote,
       UserCodeVerification,
-      NotificationSetting,
+      NotificationSchedule,
     ],
   };
 };

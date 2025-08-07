@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotificationSetting } from './entities/notification-setting.entity';
+import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { DayOfWeekEnum, DayOfWeekType } from './enums/day-of-week.enum';
 
@@ -11,8 +11,8 @@ export class NotificationSchedulerService {
   private readonly logger = new Logger(NotificationSchedulerService.name);
 
   constructor(
-    @InjectRepository(NotificationSetting)
-    private readonly notificationSettingRepo: Repository<NotificationSetting>,
+    @InjectRepository(NotificationSchedule)
+    private readonly notificationSettingRepo: Repository<NotificationSchedule>,
   ) {}
 
   // Runs every minute
@@ -27,7 +27,7 @@ export class NotificationSchedulerService {
     }
   }
 
-  private calculateNextNotificationTime(setting: NotificationSetting): Date {
+  private calculateNextNotificationTime(setting: NotificationSchedule): Date {
     const [hours, minutes] = setting.time.split(':').map(Number);
     const now = new Date();
     const localDate = new Date(

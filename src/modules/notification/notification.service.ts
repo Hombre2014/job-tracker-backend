@@ -3,15 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateDailyNotification } from './dtos/create-daily-notification.dto';
 import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto';
-import { NotificationSetting } from './entities/notification-setting.entity';
+import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { NotificationAlreadyExistsException } from './exceptions/norification-exists.exception';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    @InjectRepository(NotificationSetting)
-    private readonly notificationRepository: Repository<NotificationSetting>,
+    @InjectRepository(NotificationSchedule)
+    private readonly notificationRepository: Repository<NotificationSchedule>,
   ) {}
 
   async createDailyNotification(notification: CreateDailyNotification, userId: string) {
