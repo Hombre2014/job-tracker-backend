@@ -21,15 +21,19 @@ export class NotificationSchedulerService {
     const settings = await this.notificationSettingRepo.find({ relations: ['user'] });
     for (const setting of settings) {
       const nextTime = this.calculateNextNotificationTime(setting);
-      console.error(`Next notification for user ${setting.user.id} (type: ${setting.type}): ${nextTime.toISOString()}`);
+      console.error(
+        `Next notification for user ${setting.user.id} (type: ${setting.type}): ${nextTime.toISOString()}`,
+      );
     }
   }
 
   private calculateNextNotificationTime(setting: NotificationSetting): Date {
     const [hours, minutes] = setting.time.split(':').map(Number);
     const now = new Date();
-    const localDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes));
-  
+    const localDate = new Date(
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes),
+    );
+
     if (setting.type === ReportNotificationEnum.DAILY) {
       if (localDate <= now) {
         // If time has passed today, schedule for tomorrow
@@ -51,14 +55,22 @@ export class NotificationSchedulerService {
 
   private dayOfWeekMap(day: DayOfWeekType): number {
     switch (day) {
-      case DayOfWeekEnum.SUNDAY: return 0;
-      case DayOfWeekEnum.MONDAY: return 1;
-      case DayOfWeekEnum.TUESDAY: return 2;
-      case DayOfWeekEnum.WEDNESDAY: return 3;
-      case DayOfWeekEnum.THURSDAY: return 4;
-      case DayOfWeekEnum.FRIDAY: return 5;
-      case DayOfWeekEnum.SATURDAY: return 6;
-      default: return 0;
+      case DayOfWeekEnum.SUNDAY:
+        return 0;
+      case DayOfWeekEnum.MONDAY:
+        return 1;
+      case DayOfWeekEnum.TUESDAY:
+        return 2;
+      case DayOfWeekEnum.WEDNESDAY:
+        return 3;
+      case DayOfWeekEnum.THURSDAY:
+        return 4;
+      case DayOfWeekEnum.FRIDAY:
+        return 5;
+      case DayOfWeekEnum.SATURDAY:
+        return 6;
+      default:
+        return 0;
     }
   }
 }
