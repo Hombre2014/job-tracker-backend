@@ -6,12 +6,14 @@ import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto'
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { NotificationAlreadyExistsException } from './exceptions/norification-exists.exception';
+import { NotificationSchedulerService } from './notification-scheduler.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectRepository(NotificationSchedule)
     private readonly notificationRepository: Repository<NotificationSchedule>,
+    private readonly schedulerService: NotificationSchedulerService,
   ) {}
 
   async createDailyNotification(notification: CreateDailyNotification, userId: string) {
@@ -33,13 +35,15 @@ export class NotificationService {
       type: ReportNotificationEnum.DAILY,
     });
 
+    entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
+
     return this.notificationRepository.save(entity);
   }
 
   async createWeeklyNotification(notification: CreateWeeklyNotification, userId: string) {
     const existingNotification = await this.notificationRepository.existsBy({
       user: { id: userId },
-      type: ReportNotificationEnum.DAILY,
+      type: ReportNotificationEnum.WEEKLY,
     });
 
     if (existingNotification) {
@@ -55,6 +59,8 @@ export class NotificationService {
       dayOfWeek: notification.dayOfWeek,
       type: ReportNotificationEnum.WEEKLY,
     });
+
+    entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
 
     return this.notificationRepository.save(entity);
   }
@@ -80,6 +86,7 @@ export class NotificationService {
     }
     entity.time = notification.time;
     entity.timezoneOffset = notification.timezoneOffset;
+    entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
     return this.notificationRepository.save(entity);
   }
 
@@ -93,6 +100,7 @@ export class NotificationService {
     entity.time = notification.time;
     entity.dayOfWeek = notification.dayOfWeek;
     entity.timezoneOffset = notification.timezoneOffset;
+    entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
     return this.notificationRepository.save(entity);
   }
 

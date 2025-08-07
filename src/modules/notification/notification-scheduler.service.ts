@@ -27,7 +27,7 @@ export class NotificationSchedulerService {
     }
   }
 
-  private calculateNextNotificationTime(setting: NotificationSchedule): Date {
+  calculateNextNotificationTime(setting: NotificationSchedule): Date {
     const [hours, minutes] = setting.time.split(':').map(Number);
     const now = new Date();
     const localDate = new Date(
@@ -49,7 +49,7 @@ export class NotificationSchedulerService {
     }
 
     // Adjust by timezoneOffset (in minutes) to get UTC time
-    const utcMs = localDate.getTime() - setting.timezoneOffset * 60_000;
+    const utcMs = localDate.getTime() + setting.timezoneOffset * 60_000;
     return new Date(utcMs);
   }
 
