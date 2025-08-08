@@ -10,7 +10,7 @@ export class EmailSenderService {
     await this.sendEmail(to, 'JobTracker Email verification', `Code: ${code}`);
   }
 
-  private async sendEmail(to: string, subject: string, body: string) {
+  async sendEmail(to: string, subject: string, body: string) {
     const token = this.configService.get('RESEND_TOKEN');
     const emailFrom = this.configService.get('NOTIFICATION_EMAIL');
     const resend = new Resend(token);

@@ -5,9 +5,14 @@ import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailSenderModule } from '../email-sender/email-sender.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), TypeOrmModule.forFeature([NotificationSchedule])],
+  imports: [
+    ScheduleModule.forRoot(),
+    TypeOrmModule.forFeature([NotificationSchedule]),
+    EmailSenderModule,
+  ],
   controllers: [NotificationController],
   providers: [NotificationSchedulerService, NotificationService],
 })
