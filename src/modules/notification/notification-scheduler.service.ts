@@ -20,19 +20,30 @@ export class NotificationSchedulerService {
 
   // Runs every minute
   @Cron('*/1 * * * *')
-  async handleCron() {
+  async sendScheduledNotification() {
     const now = new Date();
-    const tenMinAgo = new Date(now.getTime() - 10 * 60 * 1000 * 999999);
+    const tenMinAgo = new Date(now.getTime() - 10 * 60 * 1000);
     const notificationsToSend = await this.notificationRepository.find({
       where: { scheduledTime: Between(tenMinAgo, now) },
       relations: {
         user: { board: { columns: { jobApplications: { company: true, column: true } } } },
       },
     });
-    for (const setting of notificationsToSend) {
-      const nextTime = this.calculateNextNotificationTime(setting);
-      console.error(
-        `Next notification for user ${setting.user.id} (type: ${setting.type}): ${nextTime.toISOString()}`,
+    for (const notification of notificationsToSend) {
+      for (const board of notification.user.board.filter((board) => !board.isArchived)) {
+        await this.emailSenderService.sendEmail(
+          notification.user.email,
+          `Your Job Tracker ${notification.type} Report`,
+          this.generateJobsHtmlPage(board),
+        );
+      }
+
+      // Update the scheduled time for the next notification
+      const nextTime = this.calculateNextNotificationTime(notification);
+      notification.scheduledTime = nextTime;
+      await this.notificationRepository.save(notification);
+      console.info(
+        `Schedule next notification for user ${notification.user.id} (type: ${notification.type}): ${nextTime.toISOString()}`,
       );
     }
   }
