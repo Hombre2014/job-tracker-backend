@@ -8,6 +8,7 @@ import { DayOfWeekEnum, DayOfWeekType } from './enums/day-of-week.enum';
 import { Board } from '../boards/entities/board.entity';
 import { EmailSenderService } from '../email-sender/email-sender.service';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
+import { JobApplicationStatus } from '../job-applications/job-application-status.enum';
 
 @Injectable()
 export class NotificationSchedulerService {
@@ -24,7 +25,9 @@ export class NotificationSchedulerService {
     const tenMinAgo = new Date(now.getTime() - 10 * 60 * 1000 * 999999);
     const notificationsToSend = await this.notificationRepository.find({
       where: { scheduledTime: Between(tenMinAgo, now) },
-      relations: { user: { board: { columns: { jobApplications: { company: true } } } } },
+      relations: {
+        user: { board: { columns: { jobApplications: { company: true, column: true } } } },
+      },
     });
     for (const setting of notificationsToSend) {
       const nextTime = this.calculateNextNotificationTime(setting);
@@ -102,15 +105,15 @@ export class NotificationSchedulerService {
   generateJobsHtmlPage(board: Board): string {
     const jobs = board.columns.flatMap((column) => column.jobApplications);
     // Group jobs by status
-    const statusMap: Record<string, Array<JobApplication>> = {};
-    const jobsWithDeadline: Array<JobApplication> = [];
+    const statusMap: Record<JobApplicationStatus, Array<JobApplication>> = {
+      [JobApplicationStatus.JobCreated]: [],
+      [JobApplicationStatus.Deadline]: [],
+      [JobApplicationStatus.Applied]: [],
+      [JobApplicationStatus.Interview]: [],
+      [JobApplicationStatus.OfferReceived]: [],
+      [JobApplicationStatus.JobMoved]: [],
+    };
     for (const job of jobs) {
-      if (job.deadline) {
-        jobsWithDeadline.push(job);
-      }
-      if (!statusMap[job.status]) {
-        statusMap[job.status] = [];
-      }
       statusMap[job.status].push(job);
     }
 
@@ -121,11 +124,12 @@ export class NotificationSchedulerService {
         h2 { margin-top: 32px; color: #2a4d7c; }
         .card { border: 1px solid #e2e2e2; border-radius: 12px; background: #fff; margin: 32px 0; padding: 24px; }
         .table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .table th, .table td { padding: 0; border: none; }
-        .status-cell { background: #FFD36A; color: #fff; font-weight: bold; padding: 12px 24px; border-radius: 4px; font-size: 1rem; text-align: left; width: 180px; }
+        .table th, .table td { padding: 10px 0; border: none; }
+        .column-name-cell { background: #FFD36A; color: #fff; background-clip: content-box; font-weight: bold; border-radius: 4px; font-size: 1rem; text-align: center; width: 180px; }
         .job-title { font-weight: bold; color: #2a1859; font-size: 1.2rem; }
         .company-salary { color: #7B6F9E; font-size: 1rem; margin-top: 4px; }
-        .deadline-cell { color: #E25A5A; font-weight: bold; font-size: 1.1rem; text-align: right; width: 180px; }
+        .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; width: 180px; }
+        .deadline-cell { color: #E25A5A; }
         .row { height: 64px; }
       </style>
     `;
@@ -145,34 +149,37 @@ export class NotificationSchedulerService {
 
     // Table for jobs with deadline
     let html = `<html><head>${styles}</head><body>`;
-    if (jobsWithDeadline.length) {
+    if (statusMap[JobApplicationStatus.Deadline].length) {
       html += `<h2>Past Due Activities</h2><div class="card"><table class="table"><tbody>`;
-      for (const job of jobsWithDeadline) {
+      for (const job of statusMap[JobApplicationStatus.Deadline]) {
         html += `
           <tr class="row">
-            <td class="status-cell">${job.status}</td>
-            <td style="padding-left:32px;">
+            <td>
               <div class="job-title">${job.title}</div>
-              <div class="company-salary">${job.company?.name || ''}${job.salary ? ' - ' + job.salary : ''}</div>
+              <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
-            <td class="deadline-cell">${formatDate(job.deadline)}</td>
+            <td class="column-name-cell">${job.column.name}</td>
+            <td class="time-cell deadline-cell">${formatDate(job.deadline)}</td>
           </tr>
         `;
       }
       html += `</tbody></table></div>`;
     }
 
-    // Tables per status (similar design, no status column)
-    for (const status of Object.keys(statusMap)) {
+    // Tables per status (except Deadline)
+    const jobsPerStatus = Object.keys(statusMap).filter(
+      (status) => status !== JobApplicationStatus.Deadline && statusMap[status].length > 0,
+    );
+    for (const status of jobsPerStatus) {
       html += `<h2>${status} Jobs</h2><div class="card"><table class="table"><tbody>`;
       for (const job of statusMap[status]) {
         html += `
           <tr class="row">
             <td style="padding-left:0;">
               <div class="job-title">${job.title}</div>
-              <div class="company-salary">${job.company?.name || ''}${job.salary ? ' - ' + job.salary : ''}</div>
+              <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
-            <td class="deadline-cell">${job.updatedAt ? formatDate(job.updatedAt) : ''}</td>
+            <td class="time-cell">${formatDate(job.updatedAt)}</td>
           </tr>
         `;
       }
