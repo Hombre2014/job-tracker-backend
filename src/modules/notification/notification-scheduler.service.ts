@@ -32,9 +32,10 @@ export class NotificationSchedulerService {
     for (const notification of notificationsToSend) {
       for (const board of notification.user.board.filter((board) => !board.isArchived)) {
         const hour = Number.parseInt(notification.time.split(':')[0]);
+        const reportType = this.capitalizeString(notification.type);
         await this.emailSenderService.sendEmail(
           notification.user.email,
-          `Your Job Tracker ${notification.type} Report`,
+          `Your Job Tracker ${reportType} Report`,
           this.generateJobsHtmlPage(board, notification.user.firstName, hour, notification.type),
         );
       }
@@ -141,11 +142,12 @@ export class NotificationSchedulerService {
         h2 { margin-top: 32px; color: #2a4d7c; }
         .card { border: 1px solid #e2e2e2; border-radius: 12px; background: #fff; margin: 32px 0; padding: 24px; }
         .table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .table th, .table td { padding: 10px 0; border: none; }
-        .column-name-cell { background: #FFD36A; color: #fff; background-clip: content-box; font-weight: bold; border-radius: 4px; font-size: 1rem; text-align: center; width: 180px; }
+        .table th, .table td { padding-top: 10px; padding-bottom: 10px; border: none; }
+        .right-cell { text-align: right; width: 15%; white-space: nowrap; }
+        .column-name-cell { font-weight: bold; font-size: 1.1rem; text-align: center; }
         .job-title { font-weight: bold; color: #2a1859; font-size: 1.2rem; }
         .company-salary { color: #7B6F9E; font-size: 1rem; margin-top: 4px; }
-        .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; width: 200px; }
+        .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; }
         .deadline-cell { color: #E25A5A; }
         .row { height: 64px; }
       </style>
@@ -197,8 +199,8 @@ export class NotificationSchedulerService {
               <div class="job-title">${job.title}</div>
               <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
-            <td class="column-name-cell">${job.column.name}</td>
-            <td class="time-cell deadline-cell">${formatDateTime(job.deadline)}</td>
+            <td class="right-cell column-name-cell">${job.column.name}</td>
+            <td class="right-cell time-cell deadline-cell">${formatDateTime(job.deadline)}</td>
           </tr>
         `;
       }
@@ -218,7 +220,7 @@ export class NotificationSchedulerService {
               <div class="job-title">${job.title}</div>
               <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
-            <td class="time-cell">${formatDateTime(job.updatedAt)}</td>
+            <td class="right-cell time-cell">${formatDateTime(job.updatedAt)}</td>
           </tr>
         `;
       }
@@ -226,5 +228,12 @@ export class NotificationSchedulerService {
     }
     html += `</body></html>`;
     return html;
+  }
+
+  private capitalizeString(str: string): string {
+    if (!str) {
+      return '';
+    }
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 }
