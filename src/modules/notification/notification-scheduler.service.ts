@@ -145,7 +145,7 @@ export class NotificationSchedulerService {
         .column-name-cell { background: #FFD36A; color: #fff; background-clip: content-box; font-weight: bold; border-radius: 4px; font-size: 1rem; text-align: center; width: 180px; }
         .job-title { font-weight: bold; color: #2a1859; font-size: 1.2rem; }
         .company-salary { color: #7B6F9E; font-size: 1rem; margin-top: 4px; }
-        .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; width: 180px; }
+        .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; width: 200px; }
         .deadline-cell { color: #E25A5A; }
         .row { height: 64px; }
       </style>
@@ -163,6 +163,19 @@ export class NotificationSchedulerService {
         day: 'numeric',
       });
     };
+    const formatDateTime = (dateTime: Date | string | undefined) => {
+      if (!dateTime) {
+        return '';
+      }
+      const d = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
+      return d.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+      });
+    };
 
     // Table for jobs with deadline
     let html = `<html><head>${styles}</head><body>`;
@@ -173,7 +186,7 @@ export class NotificationSchedulerService {
           ? 'afternoon'
           : 'evening';
     html += `<h1>Good ${dayPart} ${userName}!</h1>`;
-    html += `<h3>Here is your ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3>br>`;
+    html += `<h3>Here is your ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3><br>`;
 
     if (statusMap[JobApplicationStatus.Deadline].length) {
       html += `<h2>Past Due Activities</h2><div class="card"><table class="table"><tbody>`;
@@ -185,7 +198,7 @@ export class NotificationSchedulerService {
               <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
             <td class="column-name-cell">${job.column.name}</td>
-            <td class="time-cell deadline-cell">${formatDate(job.deadline)}</td>
+            <td class="time-cell deadline-cell">${formatDateTime(job.deadline)}</td>
           </tr>
         `;
       }
@@ -205,7 +218,7 @@ export class NotificationSchedulerService {
               <div class="job-title">${job.title}</div>
               <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
             </td>
-            <td class="time-cell">${formatDate(job.updatedAt)}</td>
+            <td class="time-cell">${formatDateTime(job.updatedAt)}</td>
           </tr>
         `;
       }
