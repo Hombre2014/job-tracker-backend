@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, LessThan, Repository } from 'typeorm';
 import { NotificationSchedule } from './entities/notification-schedule.entity';
-import { ReportNotificationEnum } from './enums/report-notification.enum';
+import { ReportNotificationEnum, ReportNotificationType } from './enums/report-notification.enum';
 import { DayOfWeekEnum, DayOfWeekType } from './enums/day-of-week.enum';
 import { Board } from '../boards/entities/board.entity';
 import { EmailSenderService } from '../email-sender/email-sender.service';
@@ -31,10 +31,11 @@ export class NotificationSchedulerService {
     });
     for (const notification of notificationsToSend) {
       for (const board of notification.user.board.filter((board) => !board.isArchived)) {
+        const hour = Number.parseInt(notification.time.split(':')[0]);
         await this.emailSenderService.sendEmail(
           notification.user.email,
           `Your Job Tracker ${notification.type} Report`,
-          this.generateJobsHtmlPage(board),
+          this.generateJobsHtmlPage(board, notification.user.firstName, hour, notification.type),
         );
       }
 
@@ -113,7 +114,12 @@ export class NotificationSchedulerService {
     }
   }
 
-  generateJobsHtmlPage(board: Board): string {
+  generateJobsHtmlPage(
+    board: Board,
+    userName: string,
+    notificationTime: number,
+    reportType: ReportNotificationType,
+  ): string {
     const jobs = board.columns.flatMap((column) => column.jobApplications);
     // Group jobs by status
     const statusMap: Record<JobApplicationStatus, Array<JobApplication>> = {
@@ -160,6 +166,15 @@ export class NotificationSchedulerService {
 
     // Table for jobs with deadline
     let html = `<html><head>${styles}</head><body>`;
+    const dayPart =
+      notificationTime >= 6 && notificationTime < 12
+        ? 'morning'
+        : notificationTime >= 12 && notificationTime < 18
+          ? 'afternoon'
+          : 'evening';
+    html += `<h1>Good ${dayPart} ${userName}!</h1>`;
+    html += `<h3>Here is your ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3>br>`;
+
     if (statusMap[JobApplicationStatus.Deadline].length) {
       html += `<h2>Past Due Activities</h2><div class="card"><table class="table"><tbody>`;
       for (const job of statusMap[JobApplicationStatus.Deadline]) {
