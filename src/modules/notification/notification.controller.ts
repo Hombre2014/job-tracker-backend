@@ -9,6 +9,11 @@ import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto'
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
+  @Get('report')
+  getNotifications(@AuthUser() user: AuthUserDto) {
+    return this.notificationService.getNotifications(user.userId);
+  }
+
   @Get('daily-report')
   getDailyNotification(@AuthUser() user: AuthUserDto) {
     return this.notificationService.getDailyNotification(user.userId);

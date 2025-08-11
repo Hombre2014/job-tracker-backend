@@ -15,6 +15,16 @@ export class NotificationService {
     private readonly schedulerService: NotificationSchedulerService,
   ) {}
 
+  async getNotifications(userId: string) {
+    const notifications = await this.notificationRepository.findBy({
+      user: { id: userId },
+    });
+    return {
+      daily: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.DAILY, null),
+      weekly: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.WEEKLY, null),
+    };
+  }
+
   async createDailyNotification(notification: CreateDailyNotification, userId: string) {
     return this.createNotification(notification, ReportNotificationEnum.DAILY, userId);
   }
