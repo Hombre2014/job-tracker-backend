@@ -3,4 +3,4 @@ export enum ReportNotificationEnum {
   WEEKLY = 'WEEKLY',
 }
 
-export type ReportNotificationType = `${ReportNotificationEnum}`;
+export type ReportNotificationType = keyof typeof ReportNotificationEnum;
