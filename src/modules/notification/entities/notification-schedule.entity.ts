@@ -10,7 +10,10 @@ import { Check, Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typ
 @Check('"timezone_offset" >= -840 AND "timezone_offset" <= 720')
 @Unique('UN_NOTIFICATION_TYPE_PER_USER', ['user', 'type'])
 export class NotificationSchedule extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.notificationSchedules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.notificationSchedules, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
