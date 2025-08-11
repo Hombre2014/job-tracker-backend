@@ -8,4 +8,4 @@ export enum DayOfWeekEnum {
   SATURDAY = 'SATURDAY',
 }
 
-export type DayOfWeekType = `${DayOfWeekEnum}`;
+export type DayOfWeekType = keyof typeof DayOfWeekEnum;
