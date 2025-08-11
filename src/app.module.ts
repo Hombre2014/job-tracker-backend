@@ -16,12 +16,14 @@ import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploa
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AppController } from './app.controller';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       ...getDataSourceOptions(),
     }),
+    ScheduleModule.forRoot(),
     HealthCheckModule,
     UsersModule,
     BoardsModule,
