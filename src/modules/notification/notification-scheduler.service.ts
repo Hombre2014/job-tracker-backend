@@ -31,12 +31,23 @@ export class NotificationSchedulerService {
     });
     for (const notification of notificationsToSend) {
       for (const board of notification.user.board.filter((board) => !board.isArchived)) {
+        const reportData = this.prepareDataForReport(notification.type, board);
+        if (reportData == null) {
+          continue;
+        }
+
         const hour = Number.parseInt(notification.time.split(':')[0]);
         const reportType = this.capitalizeString(notification.type);
+        const email = this.generateJobsHtmlPage(
+          reportData,
+          notification.user.firstName,
+          hour,
+          notification.type,
+        );
         await this.emailSenderService.sendEmail(
           notification.user.email,
           `Your Job Tracker ${reportType} Report`,
-          this.generateJobsHtmlPage(board, notification.user.firstName, hour, notification.type),
+          email,
         );
       }
 
@@ -115,15 +126,18 @@ export class NotificationSchedulerService {
     }
   }
 
-  generateJobsHtmlPage(
+  /**
+   * Prepare data for email. Gets data for the last day or week accordingly to @param notificationType.
+   * Filters Job Application by `updatedAt` or `deadline` field.
+   * @param notificationType
+   * @param board
+   * @returns Record<JobApplicationStatus, Array<JobApplication>> if any record exits otherwise returns null.
+   */
+  prepareDataForReport(
+    notificationType: ReportNotificationType,
     board: Board,
-    userName: string,
-    notificationTime: number,
-    reportType: ReportNotificationType,
-  ): string {
-    const jobs = board.columns.flatMap((column) => column.jobApplications);
-    // Group jobs by status
-    const statusMap: Record<JobApplicationStatus, Array<JobApplication>> = {
+  ): Record<JobApplicationStatus, Array<JobApplication>> | null {
+    const jobRecords: Record<JobApplicationStatus, Array<JobApplication>> = {
       [JobApplicationStatus.JobCreated]: [],
       [JobApplicationStatus.Deadline]: [],
       [JobApplicationStatus.Applied]: [],
@@ -131,11 +145,33 @@ export class NotificationSchedulerService {
       [JobApplicationStatus.OfferReceived]: [],
       [JobApplicationStatus.JobMoved]: [],
     };
-    for (const job of jobs) {
-      statusMap[job.status].push(job);
+
+    const now = new Date();
+    const from = new Date();
+    from.setDate(now.getDate() - (notificationType === ReportNotificationEnum.DAILY ? 1 : 7));
+
+    const jobs = board.columns.flatMap((column) => column.jobApplications);
+    const jobsPassedDeadline = jobs
+      .filter((job) => job.status === JobApplicationStatus.Deadline)
+      .filter((job) => new Date(job.deadline) > now);
+    const jobsUpdatedAfterFrom = jobs
+      .filter((job) => job.status !== JobApplicationStatus.Deadline)
+      .filter((job) => new Date(job.updatedAt) > from && new Date(job.updatedAt) < now);
+
+    jobRecords.Deadline = jobsPassedDeadline;
+    for (const job of jobsUpdatedAfterFrom) {
+      jobRecords[job.status].push(job);
     }
 
-    // Updated styles for new design
+    return jobsPassedDeadline.length > 0 && jobsUpdatedAfterFrom.length > 0 ? jobRecords : null;
+  }
+
+  generateJobsHtmlPage(
+    reportData: Record<JobApplicationStatus, Array<JobApplication>>,
+    userName: string,
+    notificationTime: number,
+    reportType: ReportNotificationType,
+  ): string {
     const styles = `
       <style>
         body { font-family: Arial, sans-serif; background: #f9f9f9; color: #222; }
@@ -190,9 +226,9 @@ export class NotificationSchedulerService {
     html += `<h1>Good ${dayPart} ${userName}!</h1>`;
     html += `<h3>Here is your ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3><br>`;
 
-    if (statusMap[JobApplicationStatus.Deadline].length) {
+    if (reportData[JobApplicationStatus.Deadline].length) {
       html += `<h2>Past Due Activities</h2><div class="card"><table class="table"><tbody>`;
-      for (const job of statusMap[JobApplicationStatus.Deadline]) {
+      for (const job of reportData[JobApplicationStatus.Deadline]) {
         html += `
           <tr class="row">
             <td>
@@ -208,12 +244,12 @@ export class NotificationSchedulerService {
     }
 
     // Tables per status (except Deadline)
-    const jobsPerStatus = Object.keys(statusMap).filter(
-      (status) => status !== JobApplicationStatus.Deadline && statusMap[status].length > 0,
+    const jobsPerStatus = Object.keys(reportData).filter(
+      (status) => status !== JobApplicationStatus.Deadline && reportData[status].length > 0,
     );
     for (const status of jobsPerStatus) {
       html += `<h2>${status} Jobs</h2><div class="card"><table class="table"><tbody>`;
-      for (const job of statusMap[status]) {
+      for (const job of reportData[status]) {
         html += `
           <tr class="row">
             <td style="padding-left:0;">
