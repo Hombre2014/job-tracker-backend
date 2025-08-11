@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Post, Put } from '@nestjs/common';
 import { AuthUser } from '../auth/user.decorator';
 import { NotificationService } from './notification.service';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
@@ -52,12 +52,14 @@ export class NotificationController {
   }
 
   @Delete('daily-report')
-  deleteDailyNotification(@AuthUser() user: AuthUserDto) {
-    return this.notificationService.deleteDailyNotification(user.userId);
+  @HttpCode(204)
+  async deleteDailyNotification(@AuthUser() user: AuthUserDto) {
+    await this.notificationService.deleteDailyNotification(user.userId);
   }
 
   @Delete('weekly-report')
-  deleteWeeklyNotification(@AuthUser() user: AuthUserDto) {
-    return this.notificationService.deleteWeeklyNotification(user.userId);
+  @HttpCode(204)
+  async deleteWeeklyNotification(@AuthUser() user: AuthUserDto) {
+    await this.notificationService.deleteWeeklyNotification(user.userId);
   }
 }
