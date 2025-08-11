@@ -9,10 +9,12 @@ import { Board } from '../boards/entities/board.entity';
 import { EmailSenderService } from '../email-sender/email-sender.service';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { JobApplicationStatus } from '../job-applications/job-application-status.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class NotificationSchedulerService {
   constructor(
+    private readonly configService: ConfigService,
     private readonly emailSenderService: EmailSenderService,
     @InjectRepository(NotificationSchedule)
     private readonly notificationRepository: Repository<NotificationSchedule>,
@@ -40,6 +42,7 @@ export class NotificationSchedulerService {
         const reportType = this.capitalizeString(notification.type);
         const email = this.generateJobsHtmlPage(
           reportData,
+          board.id,
           notification.user.firstName,
           hour,
           notification.type,
@@ -163,11 +166,12 @@ export class NotificationSchedulerService {
       jobRecords[job.status].push(job);
     }
 
-    return jobsPassedDeadline.length > 0 && jobsUpdatedAfterFrom.length > 0 ? jobRecords : null;
+    return jobsPassedDeadline.length > 0 || jobsUpdatedAfterFrom.length > 0 ? jobRecords : null;
   }
 
   generateJobsHtmlPage(
     reportData: Record<JobApplicationStatus, Array<JobApplication>>,
+    boardId: string,
     userName: string,
     notificationTime: number,
     reportType: ReportNotificationType,
@@ -186,6 +190,7 @@ export class NotificationSchedulerService {
         .time-cell { font-weight: bold; font-size: 1.1rem; text-align: right; }
         .deadline-cell { color: #E25A5A; }
         .row { height: 64px; }
+        .table a { display:block; color:inherit; text-decoration:none; }
       </style>
     `;
 
@@ -215,6 +220,14 @@ export class NotificationSchedulerService {
       });
     };
 
+    const jobLink = (jobId: string) =>
+      this.configService.get('FRONTEND_PUBLIC_URL') +
+      'home/boards/' +
+      boardId +
+      '/job/' +
+      jobId +
+      '/job-details';
+
     // Table for jobs with deadline
     let html = `<html><head>${styles}</head><body>`;
     const dayPart =
@@ -232,11 +245,11 @@ export class NotificationSchedulerService {
         html += `
           <tr class="row">
             <td>
-              <div class="job-title">${job.title}</div>
-              <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
+              <div class="job-title"><a href="${jobLink(job.id)}">${job.title}</a></div>
+              <div class="company-salary"><a href="${jobLink(job.id)}">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</a></div>
             </td>
-            <td class="right-cell column-name-cell">${job.column.name}</td>
-            <td class="right-cell time-cell deadline-cell">${formatDateTime(job.deadline)}</td>
+            <td class="right-cell column-name-cell"><a href="${jobLink(job.id)}">${job.column.name}</a></td>
+            <td class="right-cell time-cell deadline-cell"><a href="${jobLink(job.id)}">${formatDateTime(job.deadline)}</a></td>
           </tr>
         `;
       }
@@ -248,20 +261,23 @@ export class NotificationSchedulerService {
       (status) => status !== JobApplicationStatus.Deadline && reportData[status].length > 0,
     );
     for (const status of jobsPerStatus) {
-      html += `<h2>${status} Jobs</h2><div class="card"><table class="table"><tbody>`;
+      html += `<h2>${status}</h2><div class="card"><table class="table"><tbody>`;
       for (const job of reportData[status]) {
         html += `
           <tr class="row">
             <td style="padding-left:0;">
-              <div class="job-title">${job.title}</div>
-              <div class="company-salary">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</div>
+              <div class="job-title"><a href="${jobLink(job.id)}">${job.title}</a></div>
+              <div class="company-salary"><a href="${jobLink(job.id)}">${job.company.name}${job.salary ? ' - ' + job.salary : ''}</a></div>
             </td>
-            <td class="right-cell time-cell">${formatDateTime(job.updatedAt)}</td>
+            <td class="right-cell time-cell"><a href="${jobLink(job.id)}">${formatDateTime(job.updatedAt)}</a></td>
           </tr>
         `;
       }
       html += `</tbody></table></div>`;
     }
+
+    const unsubscribeLink = this.configService.get('FRONTEND_PUBLIC_URL') + 'home/settings';
+    html += `<br><a href="${unsubscribeLink}">Unsubscribe</a>`;
     html += `</body></html>`;
     return html;
   }

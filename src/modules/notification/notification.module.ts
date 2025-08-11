@@ -6,6 +6,7 @@ import { NotificationService } from './notification.service';
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmailSenderModule } from '../email-sender/email-sender.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { EmailSenderModule } from '../email-sender/email-sender.module';
     EmailSenderModule,
   ],
   controllers: [NotificationController],
-  providers: [NotificationSchedulerService, NotificationService],
+  providers: [NotificationSchedulerService, NotificationService, ConfigService],
 })
 export class NotificationModule {}
