@@ -1,11 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateDailyNotification } from './dtos/create-daily-notification.dto';
 import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto';
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
-import { NotificationAlreadyExistsException } from './exceptions/norification-exists.exception';
 import { NotificationSchedulerService } from './notification-scheduler.service';
 
 @Injectable()
@@ -23,9 +22,7 @@ export class NotificationService {
     });
 
     if (existingNotification) {
-      throw new NotificationAlreadyExistsException(
-        'Daily notification already exists for this user',
-      );
+      throw new ConflictException('Daily notification already exists for this user');
     }
 
     const entity = this.notificationRepository.create({
@@ -47,9 +44,7 @@ export class NotificationService {
     });
 
     if (existingNotification) {
-      throw new NotificationAlreadyExistsException(
-        'Weekly notification already exists for this user',
-      );
+      throw new ConflictException('Weekly notification already exists for this user');
     }
 
     const entity = this.notificationRepository.create({
