@@ -6,6 +6,7 @@ import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto'
 import { NotificationSchedule } from './entities/notification-schedule.entity';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { NotificationSchedulerService } from './notification-scheduler.service';
+import { UpdateNotification } from './dtos/update-notification.dto';
 
 @Injectable()
 export class NotificationService {
@@ -15,7 +16,7 @@ export class NotificationService {
     private readonly schedulerService: NotificationSchedulerService,
   ) {}
 
-  async getNotifications(userId: string) {
+  async getBothNotifications(userId: string) {
     const notifications = await this.notificationRepository.findBy({
       user: { id: userId },
     });
@@ -23,6 +24,26 @@ export class NotificationService {
       daily: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.DAILY, null),
       weekly: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.WEEKLY, null),
     };
+  }
+
+  async updateBothNotifications(notificationDto: UpdateNotification, userId: string) {
+    const notifications = await this.getBothNotifications(userId);
+    const result = { daily: null, weekly: null };
+    if (notifications.daily == null && notificationDto.daily != null) {
+      result.daily = await this.createDailyNotification(notificationDto.daily, userId);
+    } else if (notifications.daily != null && notificationDto.daily != null) {
+      result.daily = await this.updateDailyNotification(notificationDto.daily, userId);
+    } else if (notifications.daily != null && notificationDto.daily == null) {
+      await this.deleteDailyNotification(userId);
+    }
+    if (notifications.weekly == null && notificationDto.weekly != null) {
+      result.weekly = await this.createWeeklyNotification(notificationDto.weekly, userId);
+    } else if (notifications.weekly != null && notificationDto.weekly != null) {
+      result.weekly = await this.updateWeeklyNotification(notificationDto.weekly, userId);
+    } else if (notifications.weekly != null && notificationDto.weekly == null) {
+      await this.deleteWeeklyNotification(userId);
+    }
+    return result;
   }
 
   async createDailyNotification(notification: CreateDailyNotification, userId: string) {

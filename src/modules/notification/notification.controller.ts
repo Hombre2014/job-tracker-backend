@@ -4,14 +4,26 @@ import { NotificationService } from './notification.service';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
 import { CreateDailyNotification } from './dtos/create-daily-notification.dto';
 import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto';
+import { UpdateNotification } from './dtos/update-notification.dto';
 
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @Get('report')
-  getNotifications(@AuthUser() user: AuthUserDto) {
-    return this.notificationService.getNotifications(user.userId);
+  getBothNotifications(@AuthUser() user: AuthUserDto) {
+    return this.notificationService.getBothNotifications(user.userId);
+  }
+
+  /**
+   * Creates/Updates/Deletes both notification.
+   * If daily\week field is null - removes notification.
+   * @param user - user info from JWT
+   * @returns current users notification settings
+   */
+  @Post('report')
+  updateBothNotifications(@Body() notification: UpdateNotification, @AuthUser() user: AuthUserDto) {
+    return this.notificationService.updateBothNotifications(notification, user.userId);
   }
 
   @Get('daily-report')
