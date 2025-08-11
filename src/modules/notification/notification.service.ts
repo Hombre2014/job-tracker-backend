@@ -28,15 +28,6 @@ export class NotificationService {
     type: ReportNotificationEnum,
     userId: string,
   ) {
-    const existingNotification = await this.notificationRepository.existsBy({
-      user: { id: userId },
-      type,
-    });
-
-    if (existingNotification) {
-      throw new ConflictException(`${type} notification already exists for this user`);
-    }
-
     const entity = this.notificationRepository.create({
       user: { id: userId },
       time: notification.time,
@@ -47,7 +38,15 @@ export class NotificationService {
     });
 
     entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
-    return this.notificationRepository.save(entity);
+    try {
+      return await this.notificationRepository.save(entity);
+    } catch (e: any) {
+      // Postgres unique_violation
+      if (e?.code === '23505') {
+        throw new ConflictException(`${type} notification already exists for this user`);
+      }
+      throw e;
+    }
   }
 
   async getDailyNotification(userId: string) {
