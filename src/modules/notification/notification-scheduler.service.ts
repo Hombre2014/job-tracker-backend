@@ -73,12 +73,12 @@ export class NotificationSchedulerService {
       .findBy({
         scheduledTime: LessThan(dayAgo),
       })
-      .then((notifications) => {
-        notifications.forEach(async (notification) => {
+      .then(async (notifications) => {
+        for (const notification of notifications) {
           notification.scheduledTime = this.calculateNextNotificationTime(notification);
           await this.notificationRepository.save(notification);
           console.warn(`Rescheduled expired notification id: ${notification.id}`);
-        });
+        }
       });
   }
 
