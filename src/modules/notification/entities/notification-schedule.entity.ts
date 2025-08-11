@@ -2,7 +2,7 @@ import { BaseEntity } from '../../../entities/base.entity';
 import { User } from '../../users/entities/user.entity';
 import { DayOfWeekEnum, DayOfWeekType } from '../enums/day-of-week.enum';
 import { ReportNotificationEnum, ReportNotificationType } from '../enums/report-notification.enum';
-import { Check, Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
+import { Check, Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 
 @Entity('notification_schedules')
 @Check(`("type" != '${ReportNotificationEnum.WEEKLY}') OR ("day_of_week" IS NOT NULL)`)
@@ -38,5 +38,6 @@ export class NotificationSchedule extends BaseEntity {
 
   // Always store the scheduled time in UTC
   @Column({ name: 'scheduled_time', type: 'timestamptz' })
+  @Index('IDX_NOTIFICATION_SCHEDULE_SCHEDULED_TIME')
   scheduledTime: Date;
 }
