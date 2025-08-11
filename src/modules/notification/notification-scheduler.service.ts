@@ -156,7 +156,7 @@ export class NotificationSchedulerService {
     const jobs = board.columns.flatMap((column) => column.jobApplications);
     const jobsPassedDeadline = jobs
       .filter((job) => job.status === JobApplicationStatus.Deadline)
-      .filter((job) => new Date(job.deadline) > now);
+      .filter((job) => new Date(job.deadline) < now);
     const jobsUpdatedAfterFrom = jobs
       .filter((job) => job.status !== JobApplicationStatus.Deadline)
       .filter((job) => new Date(job.updatedAt) > from && new Date(job.updatedAt) < now);
