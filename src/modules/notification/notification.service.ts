@@ -112,7 +112,11 @@ export class NotificationService {
       throw new NotFoundException(`${type} notification not found`);
     }
 
-    Object.assign(entity, notification);
+    entity.time = notification.time;
+    entity.timezoneOffset = notification.timezoneOffset;
+    if (type === ReportNotificationEnum.WEEKLY && 'dayOfWeek' in notification) {
+      entity.dayOfWeek = notification.dayOfWeek;
+    }
     entity.scheduledTime = this.schedulerService.calculateNextNotificationTime(entity);
     return this.notificationRepository.save(entity);
   }
