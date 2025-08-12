@@ -21,8 +21,8 @@ export class NotificationService {
       user: { id: userId },
     });
     return {
-      daily: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.DAILY, null),
-      weekly: notifications.singleOrDefault((n) => n.type === ReportNotificationEnum.WEEKLY, null),
+      daily: notifications.find((n) => n.type === ReportNotificationEnum.DAILY) ?? null,
+      weekly: notifications.find((n) => n.type === ReportNotificationEnum.WEEKLY) ?? null,
     };
   }
 
