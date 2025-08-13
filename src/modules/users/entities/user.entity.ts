@@ -6,6 +6,7 @@ import { Board } from '../../boards/entities/board.entity';
 import { BaseEntity } from '../../../entities/base.entity';
 import { UserCodeVerification } from './user.code.verification.entity';
 import { Document } from '../../documents/entities/document.entity';
+import { NotificationSchedule } from 'src/modules/notification/entities/notification-schedule.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -43,6 +44,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Document, (document) => document.user)
   documents: Document[];
+
+  @OneToMany(() => NotificationSchedule, (notification) => notification.user)
+  notificationSchedules: NotificationSchedule[];
 
   private currentPassword: string;
 

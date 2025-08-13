@@ -1,0 +1,15 @@
+import { Module } from '@nestjs/common';
+import { NotificationSchedulerService } from './notification-scheduler.service';
+import { NotificationController } from './notification.controller';
+import { NotificationService } from './notification.service';
+import { NotificationSchedule } from './entities/notification-schedule.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailSenderModule } from '../email-sender/email-sender.module';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([NotificationSchedule]), EmailSenderModule],
+  controllers: [NotificationController],
+  providers: [NotificationSchedulerService, NotificationService, ConfigService],
+})
+export class NotificationModule {}

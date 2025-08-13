@@ -15,11 +15,17 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { AppwriteUploadsModule } from './modules/appwrite-uploads/appwrite-uploads.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AppController } from './app.controller';
+import { NotificationModule } from './modules/notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       ...getDataSourceOptions(),
     }),
+    ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
     HealthCheckModule,
     UsersModule,
     BoardsModule,
@@ -32,6 +38,7 @@ import { AppController } from './app.controller';
     CompaniesModule,
     AppwriteUploadsModule,
     DocumentsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
