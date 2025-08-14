@@ -25,7 +25,7 @@ export class BoardColumnsService {
       throw new BadRequestException(ExceptionMessages.doesNotExist(Board.name));
     }
 
-    // take:1 operator throws an eror "column distinctAlias.BoardColumn_id does not exist"
+    // take:1 operator throws an error "column distinctAlias.BoardColumn_id does not exist"
     const dbColumns = await this.boardColumnsRepository.find({
       select: { order: true, name: true },
       where: { board: { id: dto.boardId } },
@@ -77,6 +77,10 @@ export class BoardColumnsService {
     const dbColumns = await this.boardColumnsRepository.findBy({
       board: { id: boardId },
     });
+
+    if (!dbColumns || dbColumns.length === 0) {
+      throw new BadRequestException('There are no columns in this board.');
+    }
 
     const dbColumnsIds = dbColumns.map((x) => x.id);
     this.validateRearrange(columnsIds, dbColumnsIds);
