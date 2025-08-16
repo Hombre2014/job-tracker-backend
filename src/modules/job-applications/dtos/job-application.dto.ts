@@ -1,5 +1,5 @@
 import { BaseDto } from '../../../dtos/base.dto';
-import { JobApplicationNoteDto } from 'src/modules/job-application-notes/dtos/job-application-note.dto';
+import { JobApplicationNoteDto } from '../../job-application-notes/dtos/job-application-note.dto';
 import { BoardColumnDto } from '../../board-columns/dtos/board-column.dto';
 import { ContactDto } from '../../contacts/dtos/contact.dto';
 import { CompanyDto } from '../../companies/dtos/company.dto';

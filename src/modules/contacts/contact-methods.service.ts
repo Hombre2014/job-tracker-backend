@@ -6,9 +6,9 @@ import { ContactPhoneMapper } from './mappers/contact-phone.mapper';
 import { Contact } from './entities/contact.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContactEmailDto } from './dtos/contact-method/contact-email.dto';
-import { ArgumentInvalidException } from 'src/exceptions/argument-invalid.exceptions';
+import { ArgumentInvalidException } from '../../exceptions/argument-invalid.exceptions';
 import { ContactPhoneDto } from './dtos/contact-method/contact-phone.dto';
-import { BadRequestException } from 'src/exceptions/bad-request.exception';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CreateContactEmailDto } from './dtos/contact-method/create-contact-email.dto';
 import { CreateContactPhoneDto } from './dtos/contact-method/create-contact-phone.dto';
 
