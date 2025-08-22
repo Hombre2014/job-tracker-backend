@@ -60,6 +60,10 @@ describe('UserCodeVerificationService', () => {
     userRepository = module.get<Repository<User>>(userRepositoryToken);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
     expect(emailSender).toBeDefined();
@@ -67,38 +71,51 @@ describe('UserCodeVerificationService', () => {
     expect(userRepository).toBeDefined();
   });
 
-  it('should save verification code', async () => {
-    expect(await service.createVerificationCode(validUser.email, validUserCode.process)).toEqual(
-      validUserCode.code,
-    );
-    expect(repository.save).toHaveBeenCalledWith(validUserCode);
+  describe('createVerificationCode', () => {
+    it('should save verification code', async () => {
+      // Arrange & Act & Assert
+      expect(await service.createVerificationCode(validUser.email, validUserCode.process)).toEqual(
+        validUserCode.code,
+      );
+      expect(repository.save).toHaveBeenCalledWith(validUserCode);
+    });
+
+    it('should throw exception when user is invalid', async () => {
+      // Arrange
+      jest.spyOn(userRepository, 'findOne').mockImplementation(() => null);
+
+      // Act & Assert
+      expect(
+        async () => await service.createVerificationCode(validUser.email, validUserCode.process),
+      ).rejects.toThrow();
+      expect(repository.save).toHaveBeenCalledTimes(0);
+    });
   });
 
-  it('should throw exception when user is invalid', async () => {
-    jest.spyOn(userRepository, 'findOne').mockImplementation(() => null);
-    expect(
-      async () => await service.createVerificationCode(validUser.email, validUserCode.process),
-    ).rejects.toThrow();
-    expect(repository.save).toHaveBeenCalledTimes(0);
-  });
+  describe('createAndSendVerificationCode', () => {
+    it('should save and send verification code', async () => {
+      // Arrange & Act
+      await service.createAndSendVerificationCode(validUser.email, validUserCode.process);
 
-  it('should save and send verification code', async () => {
-    await service.createAndSendVerificationCode(validUser.email, validUserCode.process);
+      // Assert
+      expect(repository.save).toHaveBeenCalledWith(validUserCode);
+      expect(emailSender.sendVerificationEmail).toHaveBeenCalledWith(
+        validUser.email,
+        validUserCode.code,
+      );
+    });
 
-    expect(repository.save).toHaveBeenCalledWith(validUserCode);
-    expect(emailSender.sendVerificationEmail).toHaveBeenCalledWith(
-      validUser.email,
-      validUserCode.code,
-    );
-  });
+    it('should not send verification code when user is invalid', async () => {
+      // Arrange & Act
+      jest.spyOn(userRepository, 'findOne').mockImplementation(() => null);
 
-  it('should not send verification code when user is invalid', async () => {
-    jest.spyOn(userRepository, 'findOne').mockImplementation(() => null);
-    expect(
-      async () =>
-        await service.createAndSendVerificationCode(validUser.email, validUserCode.process),
-    ).rejects.toThrow();
-    expect(repository.save).toHaveBeenCalledTimes(0);
-    expect(emailSender.sendVerificationEmail).toHaveBeenCalledTimes(0);
+      // Assert
+      expect(
+        async () =>
+          await service.createAndSendVerificationCode(validUser.email, validUserCode.process),
+      ).rejects.toThrow();
+      expect(repository.save).toHaveBeenCalledTimes(0);
+      expect(emailSender.sendVerificationEmail).toHaveBeenCalledTimes(0);
+    });
   });
 });
