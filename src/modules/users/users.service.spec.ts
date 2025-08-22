@@ -49,6 +49,10 @@ describe('UsersService', () => {
     repository = module.get<Repository<User>>(repositoryToken);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
