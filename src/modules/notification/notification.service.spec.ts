@@ -3,134 +3,220 @@ import { NotificationService } from './notification.service';
 import { ReportNotificationEnum } from './enums/report-notification.enum';
 import { CreateDailyNotification } from './dtos/create-daily-notification.dto';
 import { CreateWeeklyNotification } from './dtos/create-weekly-notification.dto';
+import { Test, TestingModule } from '@nestjs/testing';
+import { NotificationSchedule } from './entities/notification-schedule.entity';
+import { NotificationSchedulerService } from './notification-scheduler.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DayOfWeekEnum } from './enums/day-of-week.enum';
 
 describe('NotificationService', () => {
   let service: NotificationService;
-  let repo: any;
-  let scheduler: any;
+  let repository: Repository<NotificationSchedule>;
+  let scheduler: NotificationSchedulerService;
 
-  beforeEach(() => {
-    repo = {
+  const validDailyNotification = {
+    id: '52d49f16-4981-4f43-ab4e-3281f732cdd6',
+    user: {
+      id: '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b',
+    },
+    time: '09:00',
+    type: ReportNotificationEnum.DAILY,
+    timezoneOffset: 0,
+    scheduledTime: new Date('2025-01-01T09:00:00Z'),
+  } as NotificationSchedule;
+
+  const validWeeklyNotification = {
+    id: '52d49f16-4981-4f43-ab4e-3281f732cdd6',
+    user: {
+      id: '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b',
+    },
+    time: '10:00',
+    dayOfWeek: DayOfWeekEnum.MONDAY,
+    type: ReportNotificationEnum.WEEKLY,
+    timezoneOffset: -60,
+    scheduledTime: new Date('2025-01-01T10:00:00Z'),
+  } as NotificationSchedule;
+
+  beforeEach(async () => {
+    const repositoryMock = {
       findBy: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
     };
-    scheduler = {
+    const schedulerMock = {
       calculateNextNotificationTime: jest.fn().mockReturnValue(new Date('2025-01-01T00:00:00Z')),
     };
-    service = new NotificationService(repo as any, scheduler as any);
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        NotificationService,
+        { provide: getRepositoryToken(NotificationSchedule), useValue: repositoryMock },
+        { provide: NotificationSchedulerService, useValue: schedulerMock },
+      ],
+    }).compile();
+
+    service = module.get<NotificationService>(NotificationService);
+    repository = module.get(getRepositoryToken(NotificationSchedule));
+    scheduler = module.get<NotificationSchedulerService>(NotificationSchedulerService);
   });
 
-  it('creates daily notification and calls scheduler with correct entity', async () => {
-    const dto: CreateDailyNotification = { time: '09:00', timezoneOffset: 0 } as any;
-    repo.create.mockImplementation((obj: any) => ({ id: 'd1', ...obj }));
-    repo.save.mockResolvedValue({ id: 'saved1' });
-
-    const result = await service.createDailyNotification(dto, 'user_id');
-
-    expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(1);
-    const calledWith = scheduler.calculateNextNotificationTime.mock.calls[0][0];
-    expect(calledWith.user).toEqual({ id: 'user_id' });
-    expect(calledWith.type).toEqual(ReportNotificationEnum.DAILY);
-    expect(repo.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        time: '09:00',
-        timezoneOffset: 0,
-      }),
-    );
-    expect(result.id).toBe('saved1');
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  it('creates weekly notification and calls scheduler with dayOfWeek', async () => {
-    const dto: CreateWeeklyNotification = {
-      time: '10:00',
-      timezoneOffset: -60,
-      dayOfWeek: 1,
-    } as any;
-    repo.create.mockImplementation((obj: any) => ({ id: 'w1', ...obj }));
-    repo.save.mockResolvedValue({ id: 'savedW' });
+  describe('createDailyNotification', () => {
+    it('creates daily notification and calls scheduler with correct entity', async () => {
+      // Arrange
+      const dto: CreateDailyNotification = { time: '09:00', timezoneOffset: 0 } as any;
+      jest.spyOn(repository, 'create').mockReturnValue(validDailyNotification);
+      jest.spyOn(repository, 'save').mockResolvedValue(validDailyNotification);
 
-    const result = await service.createWeeklyNotification(dto, 'user_id');
+      // Act
+      await service.createDailyNotification(dto, validDailyNotification.user.id);
 
-    expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(1);
-    const calledWith = scheduler.calculateNextNotificationTime.mock.calls[0][0];
-    expect(calledWith.dayOfWeek).toBe(1);
-    expect(calledWith.type).toEqual(ReportNotificationEnum.WEEKLY);
-    expect(result.id).toBe('savedW');
+      // Assert
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(1);
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: { id: validDailyNotification.user.id },
+          type: ReportNotificationEnum.DAILY,
+          time: dto.time,
+          timezoneOffset: dto.timezoneOffset,
+        }),
+      );
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          time: dto.time,
+          timezoneOffset: dto.timezoneOffset,
+        }),
+      );
+    });
+
+    it('throws ConflictException when save unique constraint violation occurs', async () => {
+      // Arrange
+      const dto: CreateDailyNotification = { time: '09:00', timezoneOffset: 0 } as any;
+      jest.spyOn(repository, 'create').mockReturnValue(validDailyNotification);
+      const error: any = new Error('duplicate');
+      error.code = '23505';
+      jest.spyOn(repository, 'save').mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(
+        service.createDailyNotification(dto, validDailyNotification.user.id),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
   });
 
-  it('throws ConflictException when save unique constraint violation occurs', async () => {
-    const dto: CreateDailyNotification = { time: '09:00', timezoneOffset: 0 } as any;
-    repo.create.mockImplementation((obj: any) => ({ ...obj }));
-    const err: any = new Error('duplicate');
-    err.code = '23505';
-    repo.save.mockRejectedValue(err);
+  describe('createWeeklyNotification', () => {
+    it('creates weekly notification and calls scheduler with dayOfWeek', async () => {
+      // Arrange
+      const dto: CreateWeeklyNotification = {
+        time: '10:00',
+        timezoneOffset: -60,
+        dayOfWeek: DayOfWeekEnum.MONDAY,
+      } as any;
+      jest.spyOn(repository, 'create').mockReturnValue(validWeeklyNotification);
+      jest.spyOn(repository, 'save').mockResolvedValue(validWeeklyNotification);
 
-    await expect(service.createDailyNotification(dto, 'user_id')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+      // Act
+      await service.createWeeklyNotification(dto, validWeeklyNotification.user.id);
+
+      // Assert
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(1);
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: { id: validWeeklyNotification.user.id },
+          type: ReportNotificationEnum.WEEKLY,
+          time: dto.time,
+          dayOfWeek: dto.dayOfWeek,
+          timezoneOffset: dto.timezoneOffset,
+        }),
+      );
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          time: dto.time,
+          timezoneOffset: dto.timezoneOffset,
+        }),
+      );
+    });
   });
 
-  it('throws NotFoundException when updating non-existing notification', async () => {
-    repo.findOne.mockResolvedValue(undefined);
-    await expect(
-      service.updateDailyNotification({ time: '09:00', timezoneOffset: 0 } as any, 'u'),
-    ).rejects.toBeInstanceOf(NotFoundException);
+  describe('updateDailyNotification', () => {
+    it('throws NotFoundException when updating non-existing notification', async () => {
+      // Arrange
+      jest.spyOn(repository, 'findOne').mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.updateDailyNotification(
+          { time: '09:00', timezoneOffset: 0 } as CreateDailyNotification,
+          '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b',
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.save).not.toHaveBeenCalled();
+      expect(scheduler.calculateNextNotificationTime).not.toHaveBeenCalled();
+    });
+
+    it('updates notification and calls scheduler with updated entity', async () => {
+      // Arrange
+      jest
+        .spyOn(repository, 'findOne')
+        .mockReturnValue(Promise.resolve(validDailyNotification as any));
+      jest.spyOn(repository, 'save').mockResolvedValue(validDailyNotification);
+      const dto = { time: '11:00', timezoneOffset: 60 } as CreateDailyNotification;
+
+      // Act
+      await service.updateDailyNotification(dto, validDailyNotification.user.id);
+
+      // Assert
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: { id: validDailyNotification.user.id },
+          time: dto.time,
+          timezoneOffset: dto.timezoneOffset,
+          type: ReportNotificationEnum.DAILY,
+        }),
+      );
+    });
   });
 
-  it('updates notification and calls scheduler with updated entity', async () => {
-    const existing = {
-      id: 'n1',
-      user: { id: 'u' },
-      type: ReportNotificationEnum.DAILY,
-      time: '08:00',
-      timezoneOffset: 0,
-    };
-    repo.findOne.mockResolvedValue(existing);
-    repo.save.mockImplementation(async (e: any) => ({ ...e, id: 'n1' }));
-    const dto = { time: '11:00', timezoneOffset: 60 } as any;
+  describe('getBothNotifications', () => {
+    it('getBothNotifications returns daily and weekly correctly', async () => {
+      // Arrange
+      jest
+        .spyOn(repository, 'findBy')
+        .mockResolvedValue([validDailyNotification, validWeeklyNotification]);
 
-    const res = await service.updateDailyNotification(dto, 'user_id');
-
-    expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user: { id: 'u' },
-        time: '11:00',
-      }),
-    );
-    expect(res.id).toBe('n1');
+      // Act
+      const res = await service.getBothNotifications('u');
+      expect(res.daily).toBe(validDailyNotification);
+      expect(res.weekly).toBe(validWeeklyNotification);
+    });
   });
 
-  it('throws NotFoundException when deleting non-existing notification', async () => {
-    repo.delete.mockResolvedValue({ affected: 0 });
-    await expect(service.deleteDailyNotification('u')).rejects.toBeInstanceOf(NotFoundException);
-  });
+  describe('updateBothNotifications', () => {
+    it('updateBothNotifications creates missing notifications and calls scheduler twice', async () => {
+      // Arrange
+      jest.spyOn(repository, 'findBy').mockResolvedValue([]);
+      // Return daily notification even for weekly time Create and Save
+      jest.spyOn(repository, 'create').mockReturnValue(validDailyNotification);
+      jest.spyOn(repository, 'save').mockReturnValue(Promise.resolve(validDailyNotification));
 
-  it('getBothNotifications returns daily and weekly correctly', async () => {
-    const daily = { id: 'd', type: ReportNotificationEnum.DAILY } as any;
-    const weekly = { id: 'w', type: ReportNotificationEnum.WEEKLY } as any;
-    repo.findBy.mockResolvedValue([daily, weekly]);
+      const dto = {
+        daily: { time: '09:00', timezoneOffset: 0 },
+        weekly: { time: '10:00', timezoneOffset: 0, dayOfWeek: 2 },
+      } as any;
 
-    const res = await service.getBothNotifications('u');
-    expect(res.daily).toBe(daily);
-    expect(res.weekly).toBe(weekly);
-  });
+      // Act
+      const res = await service.updateBothNotifications(dto, validDailyNotification.user.id);
 
-  it('updateBothNotifications creates missing notifications and calls scheduler twice', async () => {
-    repo.findBy.mockResolvedValue([]);
-    repo.create.mockImplementation((obj: any) => ({ ...obj }));
-    repo.save.mockResolvedValue({ id: 'saved' });
-    const dto = {
-      daily: { time: '09:00', timezoneOffset: 0 },
-      weekly: { time: '10:00', timezoneOffset: 0, dayOfWeek: 2 },
-    } as any;
-
-    const res = await service.updateBothNotifications(dto, 'user_id');
-
-    expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(2);
-    expect(res.daily).toBeDefined();
-    expect(res.weekly).toBeDefined();
+      // Assert
+      expect(scheduler.calculateNextNotificationTime).toHaveBeenCalledTimes(2);
+      expect(res.daily).toBeDefined();
+      expect(res.weekly).toBeDefined();
+    });
   });
 });

@@ -74,6 +74,10 @@ describe('NotificationSchedulerService', () => {
     emailSender = module.get<EmailSenderService>(EmailSenderService);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('sendScheduledNotification', () => {
     it('calls sendEmail with correct list of JobApplication and updates scheduledTime', async () => {
       // Arrange
