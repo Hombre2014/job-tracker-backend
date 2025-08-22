@@ -143,4 +143,30 @@ describe('NotificationSchedulerService', () => {
       );
     });
   });
+
+  describe('rescheduleExpiredNotifications', () => {
+    it('reschedules notifications with past scheduledTime', async () => {
+      // Arrange
+      const dayAgo = new Date();
+      dayAgo.setDate(dayAgo.getDate() - 1);
+      const tomorrow = new Date();
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      tomorrow.setUTCHours(9, 0, 0, 0);
+
+      const toBeRescheduled = structuredClone(validNotification);
+      toBeRescheduled.scheduledTime = dayAgo;
+      jest.spyOn(repository, 'findBy').mockResolvedValue([toBeRescheduled]);
+
+      // Act
+      await service.rescheduleExpiredNotifications();
+
+      // Assert
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: toBeRescheduled.id,
+          scheduledTime: tomorrow,
+        }),
+      );
+    });
+  });
 });
