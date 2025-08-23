@@ -101,9 +101,6 @@ export class JobApplicationsService {
   }
 
   async update(id: string, dto: UpdateJobApplicationDto, userId: string): Promise<JobApplication> {
-    // Checks whether jobApplication exists for the current user
-    await this.findOneById(id, userId);
-
     const jobApplication = await this.findOneById(id, userId);
 
     // Updates the column_id field

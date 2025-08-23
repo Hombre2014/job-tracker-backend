@@ -6,6 +6,13 @@ import { BoardColumn } from '../board-columns/entities/board-column.entity';
 import { Contact } from '../contacts/entities/contact.entity';
 import { Company } from '../companies/entities/company.entity';
 import { JobApplicationNote } from '../job-application-notes/entities/job-application-note.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { ContactsService } from '../contacts/contacts.service';
+import { JobApplicationNotesService } from '../job-application-notes/job-application-notes.service';
+import { CreateJobApplicationDto } from './dtos/create-job-application.dto';
+import { newGuid } from '../../utils/guid';
+import { UpdateJobApplicationDto } from './dtos/update-job-application.dto';
 
 type MockRepo<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>> & {
   [key: string]: jest.Mock;
@@ -13,207 +20,306 @@ type MockRepo<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>> & {
 
 function createMockRepo(): MockRepo {
   return {
-    existsBy: jest.fn(),
-    find: jest.fn(),
-    findOneOrFail: jest.fn(),
-    findOneByOrFail: jest.fn(),
-    findOneBy: jest.fn(),
+    countBy: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    find: jest.fn(),
+    findOneBy: jest.fn(),
+    findBy: jest.fn(),
+    upsert: jest.fn(),
+    findOne: jest.fn(),
+    findOneOrFail: jest.fn(),
+    findOneByOrFail: jest.fn(),
+    softDelete: jest.fn(),
+    existsBy: jest.fn(),
     delete: jest.fn(),
   };
 }
 
 describe('JobApplicationsService', () => {
-  let jobAppsRepo: MockRepo<JobApplication>;
-  let boardColumnsRepo: MockRepo<BoardColumn>;
-  let contactsRepo: MockRepo<Contact>;
-  let companiesRepo: MockRepo<Company>;
-  let jobAppNotesRepo: MockRepo<JobApplicationNote>;
-  let contactsService: { create: jest.Mock };
-  let jobAppNotesService: { create: jest.Mock };
   let service: JobApplicationsService;
+  let jobApplicationsRepository: Repository<JobApplication>;
+  let boardColumnsRepository: Repository<BoardColumn>;
+  let contactsRepository: Repository<Contact>;
+  let companiesRepository: Repository<Company>;
+  let jobApplicationNotesRepository: Repository<JobApplicationNote>;
+  let contactsService: ContactsService;
+  let jobApplicationNotesService: JobApplicationNotesService;
 
-  beforeEach(() => {
-    jobAppsRepo = createMockRepo();
-    boardColumnsRepo = createMockRepo();
-    contactsRepo = createMockRepo();
-    companiesRepo = createMockRepo();
-    jobAppNotesRepo = createMockRepo();
+  const validUserId = '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b';
+  const validBoardId = 'b04d000-77a5-446e-bc84-9531bf312f9b';
+  const validColumnId = 'c010000-77a5-446e-bc84-9531bf312f9b';
+  const validCompanyId = '22849b46-06a9-4254-9965-fce8964ca40b';
+  const validJobApplication = {
+    id: '97658a08-3470-43fe-b415-a5d8b3aa57d5',
+    title: 'Test Job Application',
+    company: {
+      id: validCompanyId,
+    },
+    column: {
+      id: validColumnId,
+      board: {
+        id: validBoardId,
+      },
+    },
+  } as JobApplication;
 
-    contactsService = { create: jest.fn() };
-    jobAppNotesService = { create: jest.fn() };
+  beforeEach(async () => {
+    const jobApplicationMock = createMockRepo();
+    const boardColumnsMock = createMockRepo();
+    const contactsMock = createMockRepo();
+    const companiesMock = createMockRepo();
+    const jobApplicationNotesMock = createMockRepo();
+    const contactServiceMock = {
+      create: jest.fn(),
+    };
+    const jobApplicationNotesServiceMock = {};
 
-    service = new JobApplicationsService(
-      jobAppsRepo as any,
-      boardColumnsRepo as any,
-      contactsRepo as any,
-      contactsService as any,
-      companiesRepo as any,
-      jobAppNotesRepo as any,
-      jobAppNotesService as any,
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        JobApplicationsService,
+        { provide: getRepositoryToken(JobApplication), useValue: jobApplicationMock },
+        { provide: getRepositoryToken(BoardColumn), useValue: boardColumnsMock },
+        { provide: getRepositoryToken(Contact), useValue: contactsMock },
+        { provide: getRepositoryToken(Company), useValue: companiesMock },
+        { provide: getRepositoryToken(JobApplicationNote), useValue: jobApplicationNotesMock },
+        { provide: ContactsService, useValue: contactServiceMock },
+        { provide: JobApplicationNotesService, useValue: jobApplicationNotesServiceMock },
+      ],
+    }).compile();
+
+    service = module.get<JobApplicationsService>(JobApplicationsService);
+    jobApplicationsRepository = module.get<Repository<JobApplication>>(
+      getRepositoryToken(JobApplication),
     );
+    boardColumnsRepository = module.get<Repository<BoardColumn>>(getRepositoryToken(BoardColumn));
+    contactsRepository = module.get<Repository<Contact>>(getRepositoryToken(Contact));
+    companiesRepository = module.get<Repository<Company>>(getRepositoryToken(Company));
+    jobApplicationNotesRepository = module.get<Repository<JobApplicationNote>>(
+      getRepositoryToken(JobApplicationNote),
+    );
+    contactsService = module.get<ContactsService>(ContactsService);
+    jobApplicationNotesService = module.get<JobApplicationNotesService>(JobApplicationNotesService);
   });
 
   afterEach(() => jest.resetAllMocks());
 
-  it('findBy throws BadRequestException when board column does not exist', async () => {
-    (boardColumnsRepo.existsBy as jest.Mock).mockResolvedValue(false);
+  describe('findBy', () => {
+    it('findBy throws BadRequestException when board column does not exist', async () => {
+      // Arrange
+      const randomId = 'a2a1638b-e35b-445a-894f-e46a059f50c5;';
+      jest.spyOn(boardColumnsRepository, 'existsBy').mockResolvedValue(false);
 
-    await expect(service.findBy('col-1', 'user-1')).rejects.toThrow(BadRequestException);
-    expect(boardColumnsRepo.existsBy).toHaveBeenCalledWith({
-      id: 'col-1',
-      board: { user: { id: 'user-1' } },
+      // Act & Assert
+      await expect(service.findBy(randomId, validUserId)).rejects.toThrow(BadRequestException);
+      expect(boardColumnsRepository.existsBy).toHaveBeenCalledWith({
+        id: randomId,
+        board: { user: { id: validUserId } },
+      });
+    });
+
+    it('findBy returns job applications when board column exists', async () => {
+      // Arrange
+      const jobs = [validJobApplication] as JobApplication[];
+      jest.spyOn(boardColumnsRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(jobApplicationsRepository, 'find').mockResolvedValue(jobs);
+
+      // Act
+      const res = await service.findBy(validColumnId, validUserId);
+
+      // Assert
+      expect(jobApplicationsRepository.find).toHaveBeenCalled();
+      expect(res).toBe(jobs);
+    });
+
+    it('findOneById delegates to repository findOneOrFail', async () => {
+      // Arrange
+      jest.spyOn(jobApplicationsRepository, 'findOneOrFail').mockResolvedValue(validJobApplication);
+
+      // Act
+      const res = await service.findOneById(validJobApplication.id, validUserId);
+
+      // Assert
+      expect(jobApplicationsRepository.findOneOrFail).toHaveBeenCalled();
+      expect(res).toBe(validJobApplication);
     });
   });
 
-  it('findBy returns job applications when board column exists', async () => {
-    (boardColumnsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    const jobs = [{ id: 'ja1' }, { id: 'ja2' }];
-    (jobAppsRepo.find as jest.Mock).mockResolvedValue(jobs);
+  describe('create', () => {
+    it('create saves entity and returns full entity (no contacts/notes)', async () => {
+      // Arrange
+      const dto: CreateJobApplicationDto = {
+        columnId: validColumnId,
+        title: validJobApplication.title,
+        companyId: validCompanyId,
+      };
+      jest.spyOn(boardColumnsRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(jobApplicationsRepository, 'create').mockReturnValue(validJobApplication);
+      jest.spyOn(jobApplicationsRepository, 'save').mockResolvedValue(validJobApplication);
+      jest.spyOn(jobApplicationsRepository, 'findOneOrFail').mockResolvedValue(validJobApplication);
 
-    const res = await service.findBy('col-1', 'user-1');
+      // Act
+      const res = await service.create(dto, validUserId);
 
-    expect(jobAppsRepo.find).toHaveBeenCalled();
-    expect(res).toBe(jobs);
-  });
-
-  it('findOneById delegates to repository findOneOrFail', async () => {
-    const ent = { id: 'ja1' } as any;
-    (jobAppsRepo.findOneOrFail as jest.Mock).mockResolvedValue(ent);
-
-    const res = await service.findOneById('ja1', 'user-1');
-
-    expect(jobAppsRepo.findOneOrFail).toHaveBeenCalled();
-    expect(res).toBe(ent);
-  });
-
-  it('create saves entity and returns full entity (no contacts/notes)', async () => {
-    const dto: any = { columnId: 'col-1', title: 'T' };
-    (boardColumnsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    (jobAppsRepo.create as jest.Mock).mockReturnValue({ ...dto, column: { id: 'col-1' } });
-    (jobAppsRepo.save as jest.Mock).mockResolvedValue({ id: 'ja-1' });
-    (jobAppsRepo.findOneOrFail as jest.Mock).mockResolvedValue({ id: 'ja-1', title: 'T' });
-
-    const res = await service.create(dto, 'user-1');
-
-    expect(boardColumnsRepo.existsBy).toHaveBeenCalled();
-    expect(jobAppsRepo.create).toHaveBeenCalled();
-    expect(jobAppsRepo.save).toHaveBeenCalledTimes(2);
-    expect(res).toEqual({ id: 'ja-1', title: 'T' });
-  });
-
-  it('create calls contactsService when contacts provided', async () => {
-    const dto: any = {
-      columnId: 'col-1',
-      title: 'T',
-      contacts: [{ firstName: 'A' }, { firstName: 'B' }],
-    };
-    (boardColumnsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    (jobAppsRepo.create as jest.Mock).mockReturnValue({ ...dto, column: { id: 'col-1' } });
-    (jobAppsRepo.save as jest.Mock).mockResolvedValue({ id: 'ja-2' });
-    contactsService.create.mockResolvedValueOnce({ id: 'c1' }).mockResolvedValueOnce({ id: 'c2' });
-    (jobAppsRepo.findOneOrFail as jest.Mock).mockResolvedValue({
-      id: 'ja-2',
-      title: 'T',
-      contacts: [{ id: 'c1' }, { id: 'c2' }],
+      // Assert
+      expect(boardColumnsRepository.existsBy).toHaveBeenCalled();
+      expect(jobApplicationsRepository.create).toHaveBeenCalled();
+      expect(jobApplicationsRepository.save).toHaveBeenCalledTimes(2);
+      expect(res).toEqual(validJobApplication);
     });
 
-    const res = await service.create(dto, 'user-1');
+    it('create calls contactsService when contacts provided', async () => {
+      // Arrange
+      const newContactId1 = newGuid();
+      const newContactId2 = newGuid();
+      const dto: CreateJobApplicationDto = {
+        columnId: validColumnId,
+        companyId: validCompanyId,
+        title: validJobApplication.title,
+        contacts: [
+          { firstName: 'A', lastName: 'A', boardId: validBoardId, companyIds: [validCompanyId] },
+          { firstName: 'B', lastName: 'B', boardId: validBoardId, companyIds: [validCompanyId] },
+        ],
+      };
+      jest.spyOn(boardColumnsRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(jobApplicationsRepository, 'create').mockReturnValue(validJobApplication);
+      jest.spyOn(jobApplicationsRepository, 'save').mockResolvedValue(validJobApplication);
+      jest
+        .spyOn(contactsService, 'create')
+        .mockResolvedValueOnce({ id: newContactId1 } as Contact)
+        .mockResolvedValueOnce({ id: newContactId2 } as Contact);
+      jest.spyOn(jobApplicationsRepository, 'findOneOrFail').mockResolvedValue({
+        id: validJobApplication.id,
+        title: validJobApplication.title,
+        contacts: [{ id: newContactId1 }, { id: newContactId2 }] as Contact[],
+      } as JobApplication);
 
-    expect(contactsService.create).toHaveBeenCalledTimes(2);
-    expect(jobAppsRepo.save).toHaveBeenCalledTimes(2);
-    expect(res).toEqual({ id: 'ja-2', title: 'T', contacts: [{ id: 'c1' }, { id: 'c2' }] });
+      // Act
+      const res = await service.create(dto, validUserId);
+
+      // Assert
+      expect(contactsService.create).toHaveBeenCalledTimes(2);
+      expect(jobApplicationsRepository.save).toHaveBeenCalledTimes(2);
+      expect(res).toEqual({
+        id: validJobApplication.id,
+        title: validJobApplication.title,
+        contacts: [{ id: newContactId1 }, { id: newContactId2 }],
+      });
+    });
   });
 
-  it('update throws when updating column to non-existing board column', async () => {
-    const existing = { id: 'ja1', column: { id: 'col-old' } } as any;
-    // first findOneById call used to check existence
-    jest
-      .spyOn(service, 'findOneById')
-      .mockResolvedValueOnce(existing)
-      .mockResolvedValueOnce(existing);
+  describe('update', () => {
+    it('update throws when updating column to non-existing board column', async () => {
+      // Arrange
+      const dto: UpdateJobApplicationDto = { columnId: newGuid() };
+      jest.spyOn(service, 'findOneById').mockResolvedValue(validJobApplication);
+      jest.spyOn(boardColumnsRepository, 'existsBy').mockResolvedValue(false);
 
-    (boardColumnsRepo.existsBy as jest.Mock).mockResolvedValue(false);
-
-    await expect(service.update('ja1', { columnId: 'col-new' } as any, 'user-1')).rejects.toThrow(
-      BadRequestException,
-    );
-  });
-
-  it('update throws when company id does not exist', async () => {
-    const existing = { id: 'ja1', column: { id: 'col-old' }, company: undefined } as any;
-    jest
-      .spyOn(service, 'findOneById')
-      .mockResolvedValueOnce(existing)
-      .mockResolvedValueOnce(existing);
-
-    (companiesRepo.findOneBy as jest.Mock).mockResolvedValue(undefined);
-
-    await expect(service.update('ja1', { companyId: 'comp-1' } as any, 'user-1')).rejects.toThrow(
-      BadRequestException,
-    );
-  });
-
-  it('delete removes company when job application deletion succeeds and company has no contacts', async () => {
-    const existing = { id: 'ja1', company: { id: 'comp-1', contacts: [] } } as any;
-    jest.spyOn(service, 'findOneById').mockResolvedValue(existing);
-
-    (jobAppsRepo.delete as jest.Mock).mockResolvedValue({});
-    (companiesRepo.delete as jest.Mock).mockResolvedValue({});
-
-    await service.delete('ja1', 'user-1');
-
-    expect(jobAppsRepo.delete).toHaveBeenCalledWith({ id: existing.id });
-    expect(companiesRepo.delete).toHaveBeenCalledWith({ id: existing.company.id });
-  });
-
-  it('delete swallows delete error and does not delete company', async () => {
-    const existing = { id: 'ja1', company: { id: 'comp-1', contacts: [] } } as any;
-    jest.spyOn(service, 'findOneById').mockResolvedValue(existing);
-
-    (jobAppsRepo.delete as jest.Mock).mockImplementation(() => {
-      throw new Error('boom');
+      // Act & Assert
+      await expect(service.update(validJobApplication.id, dto, validUserId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    const res = await service.delete('ja1', 'user-1');
+    it('update throws when company id does not exist', async () => {
+      // Arrange
+      const dto: UpdateJobApplicationDto = { columnId: newGuid() };
+      jest
+        .spyOn(service, 'findOneById')
+        .mockResolvedValue({ ...structuredClone(validJobApplication), company: undefined });
+      jest.spyOn(companiesRepository, 'findOneBy').mockResolvedValue(null);
 
-    expect(jobAppsRepo.delete).toHaveBeenCalled();
-    expect(companiesRepo.delete).not.toHaveBeenCalled();
-    expect(res).toBeUndefined();
+      // Act & Assert
+      await expect(service.update(validJobApplication.id, dto, validUserId)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
 
-  it('attachContact saves when contact not already attached', async () => {
-    const jobApp = { id: 'ja1', contacts: [] } as any;
-    (jobAppsRepo.findOneByOrFail as jest.Mock).mockResolvedValue(jobApp);
-    (contactsRepo.findOneByOrFail as jest.Mock).mockResolvedValue({ id: 'c1' });
-    (jobAppsRepo.save as jest.Mock).mockResolvedValue({});
+  describe('delete', () => {
+    it('delete removes company when job application deletion succeeds and company has no contacts', async () => {
+      // Arrange
+      jest.spyOn(service, 'findOneById').mockResolvedValue(validJobApplication);
 
-    await service.attachContact('ja1', 'c1', 'user-1');
+      // Act
+      await service.delete(validJobApplication.id, validUserId);
 
-    expect(jobAppsRepo.save).toHaveBeenCalled();
+      // Assert
+      expect(jobApplicationsRepository.delete).toHaveBeenCalledWith({ id: validJobApplication.id });
+      expect(companiesRepository.delete).toHaveBeenCalledWith({
+        id: validJobApplication.company.id,
+      });
+    });
+
+    it('delete swallows delete error and does not delete company', async () => {
+      // Arrange
+      jest.spyOn(service, 'findOneById').mockResolvedValue(validJobApplication);
+      jest.spyOn(jobApplicationsRepository, 'delete').mockImplementation(() => {
+        throw new Error('error');
+      });
+
+      // Act
+      const res = await service.delete(validJobApplication.id, validUserId);
+
+      // Assert
+      expect(jobApplicationsRepository.delete).toHaveBeenCalled();
+      expect(companiesRepository.delete).not.toHaveBeenCalled();
+      expect(res).toBeUndefined();
+    });
   });
 
-  it('attachContact does not save when contact already attached', async () => {
-    const jobApp = { id: 'ja1', contacts: [{ id: 'c1' }] } as any;
-    (jobAppsRepo.findOneByOrFail as jest.Mock).mockResolvedValue(jobApp);
-    (contactsRepo.findOneByOrFail as jest.Mock).mockResolvedValue({ id: 'c1' });
+  describe('attachContact', () => {
+    it('attachContact saves when contact not already attached', async () => {
+      // Arrange
+      const contactEntity = { id: newGuid() } as Contact;
+      jest
+        .spyOn(jobApplicationsRepository, 'findOneByOrFail')
+        .mockResolvedValue({ ...structuredClone(validJobApplication), contacts: [] });
+      jest.spyOn(contactsRepository, 'findOneByOrFail').mockResolvedValue(contactEntity);
+      jest.spyOn(jobApplicationsRepository, 'save').mockResolvedValue({} as JobApplication);
 
-    await service.attachContact('ja1', 'c1', 'user-1');
+      // Act
+      await service.attachContact(validJobApplication.id, contactEntity.id, validUserId);
 
-    expect(jobAppsRepo.save).not.toHaveBeenCalled();
-  });
+      // Assert
+      expect(jobApplicationsRepository.save).toHaveBeenCalled();
+    });
 
-  it('attachCompany replaces existing company and deletes old one', async () => {
-    const jobApp = { id: 'ja1', company: { id: 'old' } } as any;
-    (jobAppsRepo.findOneByOrFail as jest.Mock).mockResolvedValue(jobApp);
-    (companiesRepo.findOneByOrFail as jest.Mock).mockResolvedValue({ id: 'new' });
-    (companiesRepo.delete as jest.Mock).mockResolvedValue({});
-    (jobAppsRepo.save as jest.Mock).mockResolvedValue({});
+    it('attachContact does not save when contact already attached', async () => {
+      // Arrange
+      const contactEntity = { id: newGuid() } as Contact;
+      jest
+        .spyOn(jobApplicationsRepository, 'findOneByOrFail')
+        .mockResolvedValue({ ...structuredClone(validJobApplication), contacts: [contactEntity] });
+      jest.spyOn(contactsRepository, 'findOneByOrFail').mockResolvedValue(contactEntity);
 
-    await service.attachCompany('ja1', 'new', 'user-1');
+      // Act
+      await service.attachContact(validJobApplication.id, contactEntity.id, validUserId);
 
-    expect(companiesRepo.delete).toHaveBeenCalledWith({ id: 'old' });
-    expect(jobAppsRepo.save).toHaveBeenCalled();
+      // Assert
+      expect(jobApplicationsRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('attachCompany replaces existing company and deletes old one', async () => {
+      // Arrange
+      const companyEntity = { id: newGuid() } as Company;
+      const newCompanyEntity = { id: newGuid() } as Company;
+      const jobApplicationEntity = {
+        ...structuredClone(validJobApplication),
+        company: companyEntity,
+      } as JobApplication;
+      jest
+        .spyOn(jobApplicationsRepository, 'findOneByOrFail')
+        .mockResolvedValue(jobApplicationEntity);
+      jest.spyOn(companiesRepository, 'findOneByOrFail').mockResolvedValue(newCompanyEntity);
+      jest.spyOn(jobApplicationsRepository, 'save').mockResolvedValue({} as JobApplication);
+
+      // Act
+      await service.attachCompany(jobApplicationEntity.id, newCompanyEntity.id, validUserId);
+
+      // Assert
+      expect(companiesRepository.delete).toHaveBeenCalledWith({ id: companyEntity.id });
+      expect(jobApplicationsRepository.save).toHaveBeenCalled();
+    });
   });
 });
