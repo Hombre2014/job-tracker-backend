@@ -3,6 +3,7 @@
 Job Tracker Backend is a Nest.js application designed to manage job tracking efficiently. It utilizes TypeScript, Nest.js framework, and PostgreSQL for database interactions.
 
 ## Frontend repository
+
 [Job Tracker Frontend](https://github.com/Hombre2014/job-tracker-frontend)
 
 ## Prerequisites
