@@ -1,5 +1,12 @@
 import { JobApplicationNotesService } from './job-application-notes.service';
 import { JobApplicationNoteMapper } from './job-application-notes.mapper';
+import { Test, TestingModule } from '@nestjs/testing';
+import { JobApplicationNote } from './entities/job-application-note.entity';
+import { JobApplication } from '../job-applications/entities/job-application.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateJobApplicationNoteDto } from './dtos/create-job-application-note.dto';
+import { UpdateJobApplicationNote } from './dtos/update-job-application-note.dto';
 
 type MockRepo = Partial<Record<string, jest.Mock>> & { [key: string]: jest.Mock };
 
@@ -19,117 +26,196 @@ function createMockRepo(): MockRepo {
 }
 
 describe('JobApplicationNotesService', () => {
-  let notesRepo: MockRepo;
-  let jobAppsRepo: MockRepo;
   let mapper: JobApplicationNoteMapper;
   let service: JobApplicationNotesService;
+  let notesRepository: Repository<JobApplicationNote>;
+  let jobApplicationRepository: Repository<JobApplication>;
 
-  beforeEach(() => {
-    notesRepo = createMockRepo();
-    jobAppsRepo = createMockRepo();
+  const validUserId = '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b';
+  const validNote = {
+    id: '75e7509c-7406-41fc-9552-e4aa55a54a5a',
+    jobApplication: {
+      id: '7728dbbc-cfa9-471a-a9f7-49acc5455510',
+    },
+    content: '',
+    order: 0,
+  } as JobApplicationNote;
+
+  beforeEach(async () => {
+    const notesMock = createMockRepo();
+    const jobAPplicationMock = createMockRepo();
     mapper = new JobApplicationNoteMapper();
 
-    service = new JobApplicationNotesService(notesRepo as any, jobAppsRepo as any, mapper);
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        JobApplicationNotesService,
+        { provide: getRepositoryToken(JobApplicationNote), useValue: notesMock },
+        { provide: getRepositoryToken(JobApplication), useValue: jobAPplicationMock },
+        { provide: JobApplicationNoteMapper, useValue: mapper },
+      ],
+    }).compile();
+
+    service = module.get<JobApplicationNotesService>(JobApplicationNotesService);
+    notesRepository = module.get<Repository<JobApplicationNote>>(
+      getRepositoryToken(JobApplicationNote),
+    );
+    jobApplicationRepository = module.get<Repository<JobApplication>>(
+      getRepositoryToken(JobApplication),
+    );
   });
 
   afterEach(() => jest.resetAllMocks());
 
-  it('create validates job application and returns dto', async () => {
-    const dto: any = { jobApplicationId: 'ja1', content: 'hello' };
-    (jobAppsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    (notesRepo.countBy as jest.Mock).mockResolvedValue(2);
-    (notesRepo.create as jest.Mock).mockReturnValue({ ...dto });
-    (notesRepo.save as jest.Mock).mockResolvedValue({ id: 'n1', content: 'hello', order: 2 });
+  describe('create', () => {
+    it('create validates job application and returns dto', async () => {
+      // Arrange
+      const dto: CreateJobApplicationNoteDto = {
+        jobApplicationId: validNote.jobApplication.id,
+        content: 'hello world',
+      };
+      jest.spyOn(jobApplicationRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(notesRepository, 'countBy').mockResolvedValue(2);
+      jest.spyOn(notesRepository, 'create').mockReturnValue(validNote);
+      jest.spyOn(notesRepository, 'save').mockResolvedValue({ ...validNote, content: dto.content });
 
-    const res = await service.create(dto, 'user-1');
+      // Act
+      const res = await service.create(dto, validUserId);
 
-    expect(jobAppsRepo.existsBy).toHaveBeenCalledWith({
-      id: 'ja1',
-      column: { board: { user: { id: 'user-1' } } },
+      // Assert
+      expect(jobApplicationRepository.existsBy).toHaveBeenCalledWith({
+        id: validNote.jobApplication.id,
+        column: { board: { user: { id: validUserId } } },
+      });
+      expect(notesRepository.countBy).toHaveBeenCalled();
+      expect(notesRepository.save).toHaveBeenCalled();
+      expect(res).toHaveProperty('id', validNote.id);
+      expect(res).toHaveProperty('content', dto.content);
     });
-    expect(notesRepo.countBy).toHaveBeenCalled();
-    expect(notesRepo.save).toHaveBeenCalled();
-    expect(res).toHaveProperty('id', 'n1');
-    expect(res).toHaveProperty('content', 'hello');
+
+    it('create throws when job application id missing', async () => {
+      // Arrange
+      const dto: CreateJobApplicationNoteDto = { jobApplicationId: null, content: 'x' };
+
+      // Act & Assert
+      await expect(service.create(dto, validUserId)).rejects.toThrow();
+    });
   });
 
-  it('create throws when job application id missing', async () => {
-    const dto: any = { jobApplicationId: null, content: 'x' };
+  describe('find', () => {
+    it('find returns mapped dtos', async () => {
+      // Arrange
+      const entities = [
+        validNote,
+        { id: 'd3b328c5-2973-46e4-8c6a-123b04922543', content: 'b', order: 1 },
+      ] as JobApplicationNote[];
+      jest.spyOn(jobApplicationRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(notesRepository, 'find').mockResolvedValue(entities);
 
-    await expect(service.create(dto, 'user-1')).rejects.toThrow();
+      // Act
+      const res = await service.find('ja1', validUserId);
+
+      // Assert
+      expect(jobApplicationRepository.existsBy).toHaveBeenCalled();
+      expect(res).toHaveLength(2);
+      expect(res[0]).toHaveProperty('id', validNote.id);
+    });
   });
 
-  it('find returns mapped dtos', async () => {
-    (jobAppsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    const entities = [
-      { id: 'n1', content: 'a', order: 0 },
-      { id: 'n2', content: 'b', order: 1 },
-    ];
-    (notesRepo.find as jest.Mock).mockResolvedValue(entities);
+  describe('update', () => {
+    it('update throws when entity not found', async () => {
+      // Arrange
+      const randomId = '12e2f567-1cd2-4847-b09e-d4bf6ef7e9df';
+      jest.spyOn(notesRepository, 'findOneBy').mockResolvedValue(null);
 
-    const res = await service.find('ja1', 'user-1');
+      // Act & Assert
+      await expect(
+        service.update(randomId, { content: 'x' } as UpdateJobApplicationNote, validUserId),
+      ).rejects.toThrow("JobApplicationNote doesn't exist.");
+    });
 
-    expect(jobAppsRepo.existsBy).toHaveBeenCalled();
-    expect(res).toHaveLength(2);
-    expect(res[0]).toHaveProperty('id', 'n1');
+    it('update saves and returns dto', async () => {
+      // Arrange
+      jest.spyOn(notesRepository, 'findOneBy').mockResolvedValue(validNote);
+      jest.spyOn(notesRepository, 'save').mockResolvedValue({ ...validNote, content: 'updated' });
+
+      // Act
+      const res = await service.update(
+        validNote.id,
+        { content: 'updated' } as UpdateJobApplicationNote,
+        validUserId,
+      );
+
+      // Assert
+      expect(notesRepository.save).toHaveBeenCalled();
+      expect(res).toHaveProperty('content', 'updated');
+    });
   });
 
-  it('update throws when entity not found', async () => {
-    (notesRepo.findOneBy as jest.Mock).mockResolvedValue(undefined);
+  describe('rearrange', () => {
+    it('rearrange validates ids and upserts', async () => {
+      // Arrange
+      const entities = [
+        { id: '75e7509c-7406-41fc-9552-e4aa55a54a5a' },
+        { id: 'd3b328c5-2973-46e4-8c6a-123b04922543' },
+        { id: '12e2f567-1cd2-4847-b09e-d4bf6ef7e9df' },
+      ] as JobApplicationNote[];
+      jest.spyOn(jobApplicationRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(notesRepository, 'findBy').mockResolvedValue(entities);
 
-    await expect(service.update('n1', { content: 'x' } as any, 'user-1')).rejects.toThrow(
-      "JobApplicationNote doesn't exist.",
-    );
+      // Act
+      await service.rearrange(
+        validNote.jobApplication.id,
+        [entities[2].id, entities[1].id, entities[0].id],
+        validUserId,
+      );
+
+      // Assert
+      expect(notesRepository.upsert).toHaveBeenCalled();
+    });
+
+    it('rearrange throws on duplicate ids', async () => {
+      // Arrange
+      const entities = [
+        { id: '75e7509c-7406-41fc-9552-e4aa55a54a5a' },
+        { id: 'd3b328c5-2973-46e4-8c6a-123b04922543' },
+      ] as JobApplicationNote[];
+      jest.spyOn(jobApplicationRepository, 'existsBy').mockResolvedValue(true);
+      jest.spyOn(notesRepository, 'findBy').mockResolvedValue(entities);
+
+      // Act & Assert
+      await expect(
+        service.rearrange(
+          validNote.jobApplication.id,
+          [entities[0].id, entities[0].id],
+          validUserId,
+        ),
+      ).rejects.toThrow('List has duplicated Id.');
+    });
   });
 
-  it('update saves and returns dto', async () => {
-    const entity = { id: 'n1', content: 'a', order: 0 } as any;
-    (notesRepo.findOneBy as jest.Mock).mockResolvedValue(entity);
-    (notesRepo.save as jest.Mock).mockResolvedValue({ ...entity, content: 'updated' });
+  describe('delete', () => {
+    it('delete throws when not found', async () => {
+      // Arrange
+      const randomId = 'a2a1638b-e35b-445a-894f-e46a059f50c5;';
+      jest.spyOn(notesRepository, 'findOne').mockResolvedValue(null);
 
-    const res = await service.update('n1', { content: 'updated' } as any, 'user-1');
+      // Act & Assert
+      await expect(service.delete(randomId, validUserId)).rejects.toThrow(
+        "JobApplicationNote doesn't exist.",
+      );
+    });
 
-    expect(notesRepo.save).toHaveBeenCalled();
-    expect(res).toHaveProperty('content', 'updated');
-  });
+    it('delete soft deletes and calls rearrangeAfterDelete', async () => {
+      // Arrange
+      jest.spyOn(notesRepository, 'findOne').mockResolvedValue(validNote);
+      jest.spyOn(notesRepository, 'find').mockResolvedValue([]);
 
-  it('rearrange validates ids and upserts', async () => {
-    (jobAppsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    const entities = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-    (notesRepo.findBy as jest.Mock).mockResolvedValue(entities);
+      // Act
+      await service.delete(validNote.id, validUserId);
 
-    await service.rearrange('ja1', ['a', 'b', 'c'], 'user-1');
-
-    expect(notesRepo.upsert).toHaveBeenCalled();
-  });
-
-  it('rearrange throws on duplicate ids', async () => {
-    (jobAppsRepo.existsBy as jest.Mock).mockResolvedValue(true);
-    (notesRepo.findBy as jest.Mock).mockResolvedValue([{ id: 'a' }, { id: 'b' }]);
-
-    await expect(service.rearrange('ja1', ['a', 'a'], 'user-1')).rejects.toThrow(
-      'List has duplicated Id.',
-    );
-  });
-
-  it('delete throws when not found', async () => {
-    (notesRepo.findOne as jest.Mock).mockResolvedValue(undefined);
-
-    await expect(service.delete('n1', 'user-1')).rejects.toThrow(
-      "JobApplicationNote doesn't exist.",
-    );
-  });
-
-  it('delete soft deletes and calls rearrangeAfterDelete', async () => {
-    const note = { id: 'n1', jobApplication: { id: 'ja1' } } as any;
-    (notesRepo.findOne as jest.Mock).mockResolvedValue(note);
-    (notesRepo.softDelete as jest.Mock).mockResolvedValue({});
-    (notesRepo.find as jest.Mock).mockResolvedValue([]);
-    (notesRepo.upsert as jest.Mock).mockResolvedValue({});
-
-    await service.delete('n1', 'user-1');
-
-    expect(notesRepo.softDelete).toHaveBeenCalledWith(note.id);
-    expect(notesRepo.upsert).toHaveBeenCalled();
+      // Assert
+      expect(notesRepository.softDelete).toHaveBeenCalledWith(validNote.id);
+      expect(notesRepository.upsert).toHaveBeenCalled();
+    });
   });
 });
