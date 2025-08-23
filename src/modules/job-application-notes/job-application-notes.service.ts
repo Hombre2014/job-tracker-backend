@@ -3,10 +3,10 @@ import { JobApplicationNote } from './entities/job-application-note.entity';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BadRequestException } from 'src/exceptions/bad-request.exception';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { JobApplicationNoteMapper } from './job-application-notes.mapper';
 import { CreateJobApplicationNoteDto } from './dtos/create-job-application-note.dto';
-import { ArgumentInvalidException } from 'src/exceptions/argument-invalid.exceptions';
+import { ArgumentInvalidException } from '../../exceptions/argument-invalid.exceptions';
 import { UpdateJobApplicationNote } from './dtos/update-job-application-note.dto';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
 

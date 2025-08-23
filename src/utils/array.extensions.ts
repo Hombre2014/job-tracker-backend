@@ -10,6 +10,8 @@ if (!Array.prototype.containsDuplicates) {
     const uniqueSet = new Set(this);
     return this.length !== uniqueSet.size;
   };
+}
+if (!Array.prototype.equals) {
   Array.prototype.equals = function <T>(this: Array<T>, arrayTarget: Array<T>) {
     const set1 = new Set(this);
     const set2 = new Set(arrayTarget);
