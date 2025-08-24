@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { Injectable } from '@nestjs/common';
 import { JobApplication } from './entities/job-application.entity';
 import { BoardColumn } from '../board-columns/entities/board-column.entity';
 import { InjectRepository } from '@nestjs/typeorm';
