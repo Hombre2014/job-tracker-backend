@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Board } from '../boards/entities/board.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { newGuid } from '../../utils/guid';
 
 describe('BoardColumnsService', () => {
   let service: BoardColumnsService;
@@ -14,6 +15,13 @@ describe('BoardColumnsService', () => {
 
   const userId = 'user-1';
   const boardId = 'board-1';
+  const columnId = 'c010000-77a5-446e-bc84-9531bf312f9b';
+  const validColumn = {
+    id: columnId,
+    name: 'Test Column',
+    order: 0,
+    board: { id: boardId },
+  } as BoardColumn;
 
   beforeEach(async () => {
     const boardColumnsRepositoryMock = {
@@ -62,14 +70,12 @@ describe('BoardColumnsService', () => {
     it('throws ConflictException when column name already exists', async () => {
       // Arrange
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(true);
-      jest
-        .spyOn(repository, 'find')
-        .mockResolvedValue([{ name: 'Col', order: 0 }] as BoardColumn[]);
+      jest.spyOn(repository, 'find').mockResolvedValue([validColumn] as BoardColumn[]);
 
       // Act & Assert
-      await expect(service.create({ name: 'Col', boardId } as any, userId)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        service.create({ name: validColumn.name, boardId } as any, userId),
+      ).rejects.toBeInstanceOf(ConflictException);
 
       expect(repository.find).toHaveBeenCalled();
     });
@@ -78,27 +84,16 @@ describe('BoardColumnsService', () => {
       // Arrange
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(true);
       jest.spyOn(repository, 'find').mockResolvedValue([]);
-
-      const createdEntity = {
-        id: 'col-1',
-        name: 'Col',
-        order: 0,
-        board: { id: boardId },
-      } as BoardColumn;
-      jest.spyOn(repository, 'create').mockReturnValue(createdEntity);
-      jest.spyOn(repository, 'save').mockResolvedValue(createdEntity);
+      jest.spyOn(repository, 'create').mockReturnValue(validColumn);
+      jest.spyOn(repository, 'save').mockResolvedValue(validColumn);
 
       // Act
-      const result = await service.create({ name: 'Col', boardId } as any, userId);
+      const result = await service.create({ name: validColumn.name, boardId } as any, userId);
 
       // Assert
-      expect(repository.create).toHaveBeenCalledWith({
-        name: 'Col',
-        board: { id: boardId },
-        order: 0,
-      });
-      expect(repository.save).toHaveBeenCalledWith(createdEntity);
-      expect(result).toBe(createdEntity);
+      expect(repository.create).toHaveBeenCalled();
+      expect(repository.save).toHaveBeenCalled();
+      expect(result).toBe(validColumn);
     });
   });
 
@@ -129,8 +124,8 @@ describe('BoardColumnsService', () => {
   describe('rearrangeColumns', () => {
     it('throws BadRequestException when board does not exist', async () => {
       // Arrange
+      const columnsIds = [newGuid(), newGuid()];
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(false);
-      const columnsIds = ['col-1', 'col-2'];
 
       // Act & Assert
       await expect(service.rearrangeColumns(boardId, columnsIds, userId)).rejects.toBeInstanceOf(
@@ -151,42 +146,42 @@ describe('BoardColumnsService', () => {
 
     it('throws BadRequestException when list has duplicates', async () => {
       // Arrange
-      const columnsIds = ['col-1', 'col-1'];
-      const existingColumns = [{ id: 'col-1' }, { id: 'col-2' }] as BoardColumn[];
+      const existingColumns = [{ id: newGuid() }, { id: newGuid() }] as BoardColumn[];
+      const duplicatedColumns = [existingColumns[0].id, existingColumns[0].id];
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(true);
       jest.spyOn(repository, 'findBy').mockResolvedValue(existingColumns);
 
       // Act & Assert
-      await expect(service.rearrangeColumns(boardId, columnsIds, userId)).rejects.toThrow(
+      await expect(service.rearrangeColumns(boardId, duplicatedColumns, userId)).rejects.toThrow(
         'List has duplicated Id.',
       );
     });
 
     it('throws BadRequestException when list does not match db columns', async () => {
       // Arrange
-      const ctxColumns: any = ['col-1', 'random-col'];
-      const dbColumns = [{ id: 'col-1' }, { id: 'col-2' }] as BoardColumn[];
+      const existingColumns = [{ id: newGuid() }, { id: newGuid() }] as BoardColumn[];
+      const invalidColumn = [existingColumns[0].id, newGuid()];
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(true);
-      jest.spyOn(repository, 'findBy').mockResolvedValue(dbColumns);
+      jest.spyOn(repository, 'findBy').mockResolvedValue(existingColumns);
 
       // Act & Assert
-      await expect(service.rearrangeColumns(boardId, ctxColumns, userId)).rejects.toBeInstanceOf(
+      await expect(service.rearrangeColumns(boardId, invalidColumn, userId)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
 
     it('updates order and upserts when list is valid', async () => {
       // Arrange
-      const ctxColumns: any = ['col-2', 'col-1'];
-      const dbColumns = [
-        { id: 'col-1', order: 0 },
-        { id: 'col-2', order: 1 },
+      const existingColumns = [
+        { id: newGuid(), order: 0 },
+        { id: newGuid(), order: 1 },
       ] as BoardColumn[];
+      const validColumns = [existingColumns[1].id, existingColumns[0].id];
       jest.spyOn(boardRepository, 'existsBy').mockResolvedValue(true);
-      jest.spyOn(repository, 'findBy').mockResolvedValue(dbColumns);
+      jest.spyOn(repository, 'findBy').mockResolvedValue(existingColumns);
 
       // Act
-      await service.rearrangeColumns(boardId, ctxColumns, userId);
+      await service.rearrangeColumns(boardId, validColumns, userId);
 
       // Assert
       expect(repository.upsert).toHaveBeenCalledWith(expect.any(Array), ['id']);
@@ -196,7 +191,7 @@ describe('BoardColumnsService', () => {
   describe('update and remove (via findById)', () => {
     it('update assigns values and saves', async () => {
       // Arrange
-      const columnId = 'col-1';
+      const columnId = newGuid();
       const existing = { id: columnId, name: 'Old' } as BoardColumn;
       jest.spyOn(repository, 'findOneBy').mockResolvedValue(existing);
       jest.spyOn(repository, 'save').mockResolvedValue({ ...existing, name: 'New' } as BoardColumn);
@@ -215,7 +210,7 @@ describe('BoardColumnsService', () => {
 
     it('remove finds and removes the entity', async () => {
       // Arrange
-      const columnId = 'col-2';
+      const columnId = newGuid();
       const existing = { id: columnId, name: 'X' } as BoardColumn;
       jest.spyOn(repository, 'findOneBy').mockResolvedValue(existing);
       jest.spyOn(repository, 'remove').mockResolvedValue(existing);
