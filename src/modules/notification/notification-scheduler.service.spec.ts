@@ -26,6 +26,7 @@ describe('NotificationSchedulerService', () => {
         {
           id: '9f62c332-6b21-495e-be44-ff5c8df0d5c1',
           isArchived: false,
+          name: 'Test Board',
           columns: [
             {
               id: '39d7528f-ebaf-4bff-9586-5963740534d1',
@@ -93,7 +94,7 @@ describe('NotificationSchedulerService', () => {
       expect(emailSender.sendEmail).toHaveBeenCalledTimes(1);
       expect(emailSender.sendEmail).toHaveBeenCalledWith(
         validNotification.user.email,
-        'Your Job Tracker Daily Report',
+        `Your Job Tracker Daily Report for ${validNotification.user.board[0].name}`,
         expect.any(String),
       );
       expect((service as any).calculateNextNotificationTime).toHaveBeenCalledWith(

@@ -49,7 +49,7 @@ export class NotificationSchedulerService {
         );
         await this.emailSenderService.sendEmail(
           notification.user.email,
-          `Your Job Tracker ${reportType} Report`,
+          `Your Job Tracker ${reportType} Report for ${board.name}`,
           email,
         );
       }
