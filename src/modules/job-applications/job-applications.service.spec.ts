@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { JobApplicationsService } from './job-applications.service';
 import { Repository } from 'typeorm';
 import { JobApplication } from './entities/job-application.entity';

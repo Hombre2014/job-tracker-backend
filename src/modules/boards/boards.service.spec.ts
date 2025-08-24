@@ -36,7 +36,7 @@ describe('BoardsService', () => {
   beforeEach(async () => {
     const usersRepositoryMock = {
       findOneBy: jest.fn().mockImplementation(() => Promise.resolve(validUser)),
-      existsBy: jest.fn().mockImplementation(() => Promise.resolve(validUser)),
+      existsBy: jest.fn().mockResolvedValue(true),
       save: jest.fn().mockImplementation(() => Promise.resolve(validUser)),
       remove: jest.fn().mockImplementation(() => Promise.resolve(validUser)),
     };
@@ -45,7 +45,7 @@ describe('BoardsService', () => {
       findOneBy: jest.fn().mockImplementation(() => Promise.resolve(validBoard)),
       findBy: jest.fn().mockImplementation(() => Promise.resolve([validBoard])),
       find: jest.fn().mockImplementation(() => Promise.resolve([validBoard])),
-      create: jest.fn().mockImplementation(() => Promise.resolve(validBoard)),
+      create: jest.fn().mockReturnValue({ ...validBoard }),
       save: jest.fn().mockImplementation(() => Promise.resolve(validBoard)),
       remove: jest.fn().mockImplementation(() => Promise.resolve(validBoard)),
     };
@@ -103,10 +103,10 @@ describe('BoardsService', () => {
   it('should throw an exception on create()', async () => {
     // Arrange
     const dto = { name: validBoard.name } as CreateBoardDto;
-    jest.spyOn(usersRepository, 'existsBy').mockImplementation(() => null);
+    jest.spyOn(usersRepository, 'existsBy').mockResolvedValue(false);
 
     // Act & Assert
-    expect(() => service.create(dto, validUser.id)).rejects.toThrow(
+    await expect(service.create(dto, validUser.id)).rejects.toThrow(
       ExceptionMessages.doesNotExist(User.name),
     );
   });
@@ -119,10 +119,10 @@ describe('BoardsService', () => {
   it('should throw an exception on findBy()', async () => {
     // Arrange
     const dto = { name: validBoard.name } as FindBoardDto;
-    jest.spyOn(usersRepository, 'existsBy').mockImplementation(() => null);
+    jest.spyOn(usersRepository, 'existsBy').mockResolvedValue(false);
 
     // Act & Assert
-    expect(() => service.findBy(dto, validUser.id)).rejects.toThrow(
+    await expect(service.findBy(dto, validUser.id)).rejects.toThrow(
       ExceptionMessages.doesNotExist(User.name),
     );
   });
