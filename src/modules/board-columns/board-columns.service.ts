@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { BoardColumn } from './entities/board-column.entity';
 import { Repository } from 'typeorm/repository/Repository';
 import { InjectRepository } from '@nestjs/typeorm';
