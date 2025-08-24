@@ -43,14 +43,13 @@ export class NotificationSchedulerService {
         const email = this.generateJobsHtmlPage(
           reportData,
           board.id,
-          board.name,
           notification.user.firstName,
           hour,
           notification.type,
         );
         await this.emailSenderService.sendEmail(
           notification.user.email,
-          `Your Job Tracker ${reportType} Report`,
+          `Your Job Tracker ${reportType} Report for ${board.name}`,
           email,
         );
       }
@@ -173,7 +172,6 @@ export class NotificationSchedulerService {
   generateJobsHtmlPage(
     reportData: Record<JobApplicationStatus, Array<JobApplication>>,
     boardId: string,
-    boardName: string,
     userName: string,
     notificationTime: number,
     reportType: ReportNotificationType,
@@ -239,7 +237,7 @@ export class NotificationSchedulerService {
           ? 'afternoon'
           : 'evening';
     html += `<h1>Good ${dayPart} ${userName}!</h1>`;
-    html += `<h3>Here is your '${boardName}' ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3><br>`;
+    html += `<h3>Here is your ${reportType.toLowerCase()} job report for ${formatDate(new Date())}.</h3><br>`;
 
     if (reportData[JobApplicationStatus.Deadline].length) {
       html += `<h2>Past Due Activities</h2><div class="card"><table class="table"><tbody>`;
