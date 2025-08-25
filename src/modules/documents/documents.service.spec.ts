@@ -159,7 +159,7 @@ describe('DocumentsService', () => {
     appwriteUploadsService.uploadFile.mockResolvedValue({ url: 'https://cdn/new' });
     (documentsRepo.save as jest.Mock).mockResolvedValue({ id: 'd1', url: 'https://cdn/new' });
 
-    const file: any = { originalname: 'new.txt', size: undefined };
+    const file: any = { originalname: 'new.txt', size: 123 };
 
     const res = await service.update('d1', { title: 'New' } as UpdateDocumentDto, 'u1', file);
 

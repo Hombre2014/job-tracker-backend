@@ -68,10 +68,10 @@ describe('UsersService', () => {
 
   it('should throw NotFoundException', async () => {
     // Arrange
-    jest.spyOn(repository, 'findOneBy').mockImplementation(() => null);
+    jest.spyOn(repository, 'findOneBy').mockResolvedValue(null);
 
     // Act & Assert
-    expect(() => service.findOneBy({ email: 'user@email.com' })).toThrow(NotFoundException);
+    await expect(service.findOneBy({ email: 'user@email.com' })).rejects.toThrow(NotFoundException);
   });
 
   it('should update user', async () => {
@@ -104,7 +104,7 @@ describe('UsersService', () => {
       .mockImplementation(() => Promise.reject(new Error('unit test error')));
 
     // Act & Assert
-    expect(async () => await service.remove(validUser.id, 'some code')).rejects.toThrow();
+    await expect(service.remove(validUser.id, 'some code')).rejects.toThrow();
     expect(repository.remove).toHaveBeenCalledTimes(0);
   });
 });
