@@ -41,4 +41,15 @@ export class AppwriteUploadsService {
       throw error;
     }
   }
+
+  async deleteFile(bucketId: string, fileId: string) {
+    return this.storage.deleteFile(bucketId, fileId);
+  }
+
+  async deleteFileByUrl(url: string) {
+    const bucketId = url.split('buckets/')[1].split('/')[0];
+    const fileId = url.split('files/')[1].split('/')[0];
+
+    return this.deleteFile(bucketId, fileId);
+  }
 }
