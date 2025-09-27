@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserAlreadyExistsException } from './exceptions/user-exists.exception';
 import { FindUserDto } from './dtos/find-user.dto';
@@ -17,6 +17,7 @@ import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.ser
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly userCodeVerificationService: UserCodeVerificationService,
     private readonly boardService: BoardsService,
@@ -54,7 +55,7 @@ export class UsersService {
   }
 
   async findOneBy(where: FindUserDto): Promise<User> {
-    const user = await this.usersRepository.findOneBy(where);
+    const user = await this.usersRepository.findOne({ where, relations: ['documents'] });
 
     if (!user) {
       throw new NotFoundException(`User with properties '${JSON.stringify(where)}' not found.`);
@@ -91,7 +92,7 @@ export class UsersService {
     await this.usersRepository.save(userEntity);
   }
 
-  async remove(id: string, code: string): Promise<User> {
+  async remove(id: string, code: string): Promise<void> {
     await this.userCodeVerificationService.verifyUserCode(
       { id: id },
       code,
@@ -99,7 +100,10 @@ export class UsersService {
     );
 
     const user = await this.findOneBy({ id });
-    return this.usersRepository.remove(user);
+    return this.dataSource.transaction(async (m) => {
+      await m.remove(user.documents);
+      await m.remove(user);
+    });
   }
 
   async updatePassword(email: string, oldPassword: string, newPassword: string): Promise<void> {

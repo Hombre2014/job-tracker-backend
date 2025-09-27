@@ -9,10 +9,11 @@ import { User } from '../users/entities/user.entity';
 import { Board } from '../boards/entities/board.entity';
 import { JobApplication } from '../job-applications/entities/job-application.entity';
 import { memoryStorage } from 'multer';
+import { DocumentsSubscriber } from './documents.subscriber';
 
 @Module({
   controllers: [DocumentsController],
-  providers: [DocumentsService],
+  providers: [DocumentsService, DocumentsSubscriber],
   imports: [
     AppwriteUploadsModule,
     TypeOrmModule.forFeature([Document, User, Board, JobApplication]),
