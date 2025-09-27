@@ -7,7 +7,7 @@ import { JobApplication } from '../../job-applications/entities/job-application.
 
 @Entity('documents')
 export class Document extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.documents, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.documents)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
