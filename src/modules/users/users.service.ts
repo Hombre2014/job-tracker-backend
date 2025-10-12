@@ -13,6 +13,7 @@ import { VerificationProcess } from './enums/verification-process.enum';
 import * as bcrypt from 'bcrypt';
 import { EmailVerificationCodeDto } from './dtos/email-verification-code.dto';
 import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
+import { Document } from '../documents/entities/document.entity';
 
 @Injectable()
 export class UsersService {
@@ -101,8 +102,13 @@ export class UsersService {
 
     const user = await this.findOneBy({ id });
     return this.dataSource.transaction(async (m) => {
+      const documentUrlsToRemove = user.documents.map((doc: Document) => doc.url);
       await m.remove(user.documents);
       await m.remove(user);
+
+      for (const url of documentUrlsToRemove) {
+        this.appwriteUploadsService.deleteFileByUrl(url);
+      }
     });
   }
 

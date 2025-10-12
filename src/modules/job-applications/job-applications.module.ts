@@ -11,6 +11,7 @@ import { Company } from '../companies/entities/company.entity';
 import { ContactsModule } from '../contacts/contacts.module';
 import { JobApplicationNotesModule } from '../job-application-notes/job-application-notes.module';
 import { Document } from '../documents/entities/document.entity';
+import { AppwriteUploadsModule } from '../appwrite-uploads/appwrite-uploads.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { Document } from '../documents/entities/document.entity';
     ]),
     ContactsModule,
     JobApplicationNotesModule,
+    AppwriteUploadsModule,
   ],
   controllers: [JobApplicationsController],
   providers: [JobApplicationsService, JobApplicationMapper],

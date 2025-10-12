@@ -14,6 +14,7 @@ import { JobApplicationNote } from '../job-application-notes/entities/job-applic
 import { ContactsService } from '../contacts/contacts.service';
 import * as _ from 'lodash';
 import { JobApplicationNotesService } from '../job-application-notes/job-application-notes.service';
+import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
 
 @Injectable()
 export class JobApplicationsService {
@@ -31,6 +32,7 @@ export class JobApplicationsService {
     @InjectRepository(JobApplicationNote)
     private readonly jobApplicationNotesRepository: Repository<JobApplicationNote>,
     private readonly jobApplicationNotesService: JobApplicationNotesService,
+    private readonly appwriteUploadsService: AppwriteUploadsService,
   ) {}
 
   async findBy(columnId: string, userId: string): Promise<JobApplication[]> {
@@ -142,12 +144,18 @@ export class JobApplicationsService {
           await m.remove(jobApplication.company);
         }
       }
+      const documentUrlsToRemove = [];
       for (const document of jobApplication.documents || []) {
         if (document.jobApplications.length === 1) {
+          documentUrlsToRemove.push(document.url);
           await m.remove(document);
         }
       }
       await m.remove(jobApplication);
+
+      for (const url of documentUrlsToRemove) {
+        this.appwriteUploadsService.deleteFileByUrl(url);
+      }
     });
   }
 
