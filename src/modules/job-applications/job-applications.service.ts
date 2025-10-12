@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { JobApplication } from './entities/job-application.entity';
 import { BoardColumn } from '../board-columns/entities/board-column.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateJobApplicationDto } from './dtos/create-job-application.dto';
 import { UpdateJobApplicationDto } from './dtos/update-job-application.dto';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
@@ -18,6 +18,7 @@ import { JobApplicationNotesService } from '../job-application-notes/job-applica
 @Injectable()
 export class JobApplicationsService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(JobApplication)
     private readonly jobApplicationsRepository: Repository<JobApplication>,
     @InjectRepository(BoardColumn)
@@ -64,7 +65,7 @@ export class JobApplicationsService {
         notes: true,
         contacts: true,
         company: { contacts: true },
-        documents: true,
+        documents: { jobApplications: true },
       },
     });
   }
@@ -135,22 +136,19 @@ export class JobApplicationsService {
   async delete(id: string, userId: string) {
     const jobApplication = await this.findOneById(id, userId);
 
-    let err;
-
-    try {
-      return this.jobApplicationsRepository.delete({ id: jobApplication.id });
-    } catch (error) {
-      err = error;
-    } finally {
-      if (!err && jobApplication.company) {
-        if (
-          jobApplication.company.contacts === undefined ||
-          jobApplication.company.contacts.length === 0
-        ) {
-          await this.companiesRepository.delete({ id: jobApplication.company.id });
+    return this.dataSource.transaction(async (m) => {
+      if (jobApplication.company) {
+        if (jobApplication.company.contacts?.length === 1) {
+          await m.remove(jobApplication.company);
         }
       }
-    }
+      for (const document of jobApplication.documents || []) {
+        if (document.jobApplications.length === 1) {
+          await m.remove(document);
+        }
+      }
+      await m.remove(jobApplication);
+    });
   }
 
   async attachContact(id: string, contactId: string, userId: string) {
