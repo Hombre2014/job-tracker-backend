@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -70,6 +72,12 @@ export class UsersController {
   ) {
     const entity = await this.usersService.update(user.userId, body, profilePic);
     return this.mapper.toDto(entity);
+  }
+
+  @Public()
+  @Delete('/:id/delete/no-verify')
+  async deleteUserWithoutVerification(@Param('id', ParseUUIDPipe) userId: string) {
+    return this.usersService.removeWithoutVerification(userId);
   }
 
   @Post('/delete/create-verification-code')

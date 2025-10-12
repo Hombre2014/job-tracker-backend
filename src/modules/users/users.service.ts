@@ -100,6 +100,10 @@ export class UsersService {
       VerificationProcess.USER_DELETE,
     );
 
+    await this.removeWithoutVerification(id);
+  }
+
+  async removeWithoutVerification(id: string) {
     const user = await this.findOneBy({ id });
     return this.dataSource.transaction(async (m) => {
       const documentUrlsToRemove = user.documents.map((doc: Document) => doc.url);
