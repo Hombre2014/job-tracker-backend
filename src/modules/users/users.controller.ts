@@ -42,7 +42,6 @@ export class UsersController {
   @Public()
   @UseInterceptors(FileInterceptor('profilePic'))
   async createUser(@Body() body: CreateUserDto, @UploadedFile() profilePic: Express.Multer.File) {
-    console.log(profilePic);
     if (!body.role) {
       body.role = 'user';
     }
