@@ -86,6 +86,7 @@ export class UsersController {
       user.email,
       VerificationProcess.USER_DELETE,
     );
+    return { message: 'Verification code sent successfully' };
   }
 
   @Delete()
@@ -123,11 +124,13 @@ export class UsersController {
       email,
       VerificationProcess.USER_RESET_PASSWORD,
     );
+    return { message: 'Verification code sent successfully' };
   }
 
   @Public()
   @Post('/reset-password')
   async resetPassword(@Body() { email, code, newPassword }: ResetPasswordDto) {
     await this.usersService.resetPassword(email, code, newPassword);
+    return { message: 'Password reset successfully' };
   }
 }
