@@ -14,6 +14,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
+import { isStrongPassword } from '../../utils/password-strength.util';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +45,10 @@ export class AuthService {
       );
     }
 
-    return await this.generateTokens(user.id, user.email);
+    // Check password strength (using plain-text password before it's hashed)
+    const passwordStrength = isStrongPassword(password) ? 'strong' : 'weak';
+
+    return await this.generateTokens(user.id, user.email, passwordStrength);
   }
 
   async refreshToken(token: string): Promise<any> {
@@ -53,14 +57,19 @@ export class AuthService {
       payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('JWT_REFRESH_TOKEN'),
       });
-    } catch (JsonWebTokenError) {
+    } catch (error) {
       throw new UnauthorizedException();
     }
 
+    // Don't include passwordStrength on refresh (user is already authenticated)
     return this.generateTokens(payload.sub, payload.email);
   }
 
-  private async generateTokens(userId: string, email: string) {
+  private async generateTokens(
+    userId: string,
+    email: string,
+    passwordStrength?: 'strong' | 'weak',
+  ) {
     const payload = { sub: userId, email: email };
 
     return new JwtTokensDto({
@@ -72,6 +81,7 @@ export class AuthService {
         secret: this.configService.get('JWT_REFRESH_TOKEN'),
         expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d'),
       }),
+      passwordStrength,
     });
   }
 
