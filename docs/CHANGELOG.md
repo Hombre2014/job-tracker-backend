@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-25
+
+### Fixed
+
+- **Email Service Error Handling**: Enhanced email sending with proper error handling
+  - **Issue**: Email service silently failed without throwing errors, causing API to return success even when emails weren't sent
+  - **Fix**: Added validation for `RESEND_TOKEN` and `NOTIFICATION_EMAIL`, throws errors on failure
+  - **Impact**: API now properly fails with error messages when email configuration is missing or sending fails
+  - **Files**: `src/modules/email-sender/email-sender.service.ts`
+
+- **Password Reset Endpoints**: Added proper response messages and status codes
+  - **Issue**: Endpoints returned `204 No Content` causing frontend confusion
+  - **Fix**: Now return `200` with `{ message: 'Verification code sent successfully' }` and `{ message: 'Password reset successfully' }`
+  - **Impact**: Clear success responses for password reset operations
+  - **Files**: `src/modules/users/users.controller.ts`
+
+### Changed
+
+- **Code Cleanup**: Removed debug console.log statements
+  - **Removed**: Unnecessary profilePic logging in user creation
+  - **Benefits**: Cleaner production logs
+  - **Files**: `src/modules/users/users.controller.ts`
+
 ## [Unreleased]
 
 ### Added - Password Strength Validation (25/01/2026)
@@ -71,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backward compatibility: existing documents have `fileSize: null`
   - API responses now include `fileSize` field for all document endpoints
 
-### Changed
+### Changed - Document Service (25/01/2026)
 
 - **Documents Service**: Enhanced document creation and update logic
   - Modified `create()` method to capture and store file size automatically
