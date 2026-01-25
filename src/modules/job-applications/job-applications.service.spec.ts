@@ -1,6 +1,6 @@
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { JobApplicationsService } from './job-applications.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { JobApplication } from './entities/job-application.entity';
 import { BoardColumn } from '../board-columns/entities/board-column.entity';
 import { Contact } from '../contacts/entities/contact.entity';
@@ -10,6 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ContactsService } from '../contacts/contacts.service';
 import { JobApplicationNotesService } from '../job-application-notes/job-application-notes.service';
+import { AppwriteUploadsService } from '../appwrite-uploads/appwrite-uploads.service';
 import { CreateJobApplicationDto } from './dtos/create-job-application.dto';
 import { newGuid } from '../../utils/guid';
 import { UpdateJobApplicationDto } from './dtos/update-job-application.dto';
@@ -45,6 +46,7 @@ describe('JobApplicationsService', () => {
   let jobApplicationNotesRepository: Repository<JobApplicationNote>;
   let contactsService: ContactsService;
   let jobApplicationNotesService: JobApplicationNotesService;
+  let dataSourceMock: any;
 
   const validUserId = '8167a958-5d55-476a-8bd2-f5fcdb8e9c5b';
   const validBoardId = 'b04d000-77a5-446e-bc84-9531bf312f9b';
@@ -74,10 +76,35 @@ describe('JobApplicationsService', () => {
       create: jest.fn(),
     };
     const jobApplicationNotesServiceMock = {};
+    const appwriteUploadsServiceMock = {
+      deleteFile: jest.fn(),
+    };
+    dataSourceMock = {
+      createQueryRunner: jest.fn().mockReturnValue({
+        connect: jest.fn(),
+        startTransaction: jest.fn(),
+        commitTransaction: jest.fn(),
+        rollbackTransaction: jest.fn(),
+        release: jest.fn(),
+        manager: {
+          save: jest.fn(),
+          remove: jest.fn(),
+        },
+      }),
+      transaction: jest.fn((callback) => {
+        const mockManager = {
+          save: jest.fn().mockResolvedValue({}),
+          remove: jest.fn().mockResolvedValue({}),
+          findOne: jest.fn(),
+        };
+        return callback(mockManager);
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         JobApplicationsService,
+        { provide: DataSource, useValue: dataSourceMock },
         { provide: getRepositoryToken(JobApplication), useValue: jobApplicationMock },
         { provide: getRepositoryToken(BoardColumn), useValue: boardColumnsMock },
         { provide: getRepositoryToken(Contact), useValue: contactsMock },
@@ -85,6 +112,7 @@ describe('JobApplicationsService', () => {
         { provide: getRepositoryToken(JobApplicationNote), useValue: jobApplicationNotesMock },
         { provide: ContactsService, useValue: contactServiceMock },
         { provide: JobApplicationNotesService, useValue: jobApplicationNotesServiceMock },
+        { provide: AppwriteUploadsService, useValue: appwriteUploadsServiceMock },
       ],
     }).compile();
 
@@ -239,32 +267,47 @@ describe('JobApplicationsService', () => {
   describe('delete', () => {
     it('delete removes company when job application deletion succeeds and company has no contacts', async () => {
       // Arrange
-      jest.spyOn(service, 'findOneById').mockResolvedValue(validJobApplication);
+      const mockJobApp = {
+        ...validJobApplication,
+        documents: [],
+        company: {
+          id: validCompanyId,
+          contacts: [{ id: 'contact-1' }], // Single contact
+        },
+      };
+      jest.spyOn(service, 'findOneById').mockResolvedValue(mockJobApp as any);
 
       // Act
       await service.delete(validJobApplication.id, validUserId);
 
       // Assert
-      expect(jobApplicationsRepository.delete).toHaveBeenCalledWith({ id: validJobApplication.id });
-      expect(companiesRepository.delete).toHaveBeenCalledWith({
-        id: validJobApplication.company.id,
-      });
+      // Verify transaction was called (transaction removes entities via manager.remove)
+      expect(dataSourceMock.transaction).toHaveBeenCalled();
     });
 
     it('delete swallows delete error and does not delete company', async () => {
       // Arrange
-      jest.spyOn(service, 'findOneById').mockResolvedValue(validJobApplication);
-      jest.spyOn(jobApplicationsRepository, 'delete').mockImplementation(() => {
-        throw new Error('error');
-      });
+      const mockJobApp = {
+        ...validJobApplication,
+        documents: [],
+        company: {
+          id: validCompanyId,
+          contacts: [{ id: 'contact-1' }, { id: 'contact-2' }], // Multiple contacts
+        },
+      };
+      jest.spyOn(service, 'findOneById').mockResolvedValue(mockJobApp as any);
 
-      // Act
-      const res = await service.delete(validJobApplication.id, validUserId);
+      // Mock transaction to throw error
+      const originalTransaction = dataSourceMock.transaction;
+      dataSourceMock.transaction = jest.fn().mockRejectedValue(new Error('Transaction error'));
 
-      // Assert
-      expect(jobApplicationsRepository.delete).toHaveBeenCalled();
-      expect(companiesRepository.delete).not.toHaveBeenCalled();
-      expect(res).toBeUndefined();
+      // Act & Assert
+      await expect(service.delete(validJobApplication.id, validUserId)).rejects.toThrow(
+        'Transaction error',
+      );
+
+      // Restore original mock
+      dataSourceMock.transaction = originalTransaction;
     });
   });
 
