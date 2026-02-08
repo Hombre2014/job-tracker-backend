@@ -134,7 +134,7 @@ export class CompaniesService {
    * Find company by name OR domain (case-insensitive)
    * Used to check for duplicates before creating a new company
    */
-  private async findByNameOrDomain(name?: string, domain?: string): Promise<Company | null> {
+  async findByNameOrDomain(name?: string, domain?: string): Promise<Company | null> {
     if (!name && !domain) {
       return null;
     }
