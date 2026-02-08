@@ -64,22 +64,24 @@ async function backfill() {
       let foundLogo: string | null = null;
 
       // Method 1: Brandfetch
-      try {
-        console.log(`  Trying Brandfetch for ${domain}...`);
-        const bfResponse = await axios.get(`https://api.brandfetch.io/v2/brands/${domain}`, {
-          headers: { Authorization: `Bearer ${process.env.BRANDFETCH_API_KEY}` },
-          timeout: 10000,
-        });
+      if (process.env.BRANDFETCH_API_KEY) {
+        try {
+          console.log(`  Trying Brandfetch for ${domain}...`);
+          const bfResponse = await axios.get(`https://api.brandfetch.io/v2/brands/${domain}`, {
+            headers: { Authorization: `Bearer ${process.env.BRANDFETCH_API_KEY}` },
+            timeout: 10000,
+          });
 
-        const icon = bfResponse.data?.logos?.find(
-          (l: any) => l.type === 'icon' || l.type === 'logo',
-        );
-        if (icon?.formats?.[0]?.src) {
-          foundLogo = icon.formats[0].src;
-          console.log(`  ✅ Brandfetch found logo: ${foundLogo}`);
+          const icon = bfResponse.data?.logos?.find(
+            (l: any) => l.type === 'icon' || l.type === 'logo',
+          );
+          if (icon?.formats?.[0]?.src) {
+            foundLogo = icon.formats[0].src;
+            console.log(`  ✅ Brandfetch found logo: ${foundLogo}`);
+          }
+        } catch (err: any) {
+          console.log(`  ❌ Brandfetch failed: ${err.message}`);
         }
-      } catch (err: any) {
-        console.log(`  ❌ Brandfetch failed: ${err.message}`);
       }
 
       // Method 2: Clearbit (Fallback)
@@ -90,7 +92,7 @@ async function backfill() {
           await axios.head(cbUrl, { timeout: 10000 }); // Verify it exists
           foundLogo = cbUrl;
           console.log(`  ✅ Clearbit found logo: ${foundLogo}`);
-        } catch (err) {
+        } catch (err: any) {
           console.log(`  ❌ Clearbit failed: ${err?.message || err}`);
         }
       }
@@ -117,8 +119,6 @@ async function backfill() {
   }
 }
 
-backfill();
-// Prefer top-level await
 (async () => {
   await backfill();
 })();

@@ -34,10 +34,7 @@ export class CompaniesService {
     if (existingCompany) {
       // Company already exists, update it if we have newer data
       let shouldSave = false;
-      if (
-        createCompanyDto.url &&
-        createCompanyDto.url.toLowerCase() !== existingCompany.url?.toLowerCase()
-      ) {
+      if (createCompanyDto.url && !existingCompany.url) {
         existingCompany.url = createCompanyDto.url;
         shouldSave = true;
       }
@@ -137,26 +134,29 @@ export class CompaniesService {
    * Find company by name OR domain (case-insensitive)
    * Used to check for duplicates before creating a new company
    */
-  async findByNameOrDomain(name?: string, domain?: string): Promise<Company | null> {
+  private async findByNameOrDomain(name?: string, domain?: string): Promise<Company | null> {
     if (!name && !domain) {
       return null;
     }
 
-    const queryBuilder = this.companiesRepository.createQueryBuilder('company');
-
-    if (name && domain) {
-      // Check for either name OR domain match
-      queryBuilder.where(
-        'LOWER(company.name) = LOWER(:name) OR LOWER(company.url) = LOWER(:domain)',
-        { name, domain },
-      );
-    } else if (name) {
-      queryBuilder.where('LOWER(company.name) = LOWER(:name)', { name });
-    } else if (domain) {
-      queryBuilder.where('LOWER(company.url) = LOWER(:domain)', { domain });
+    // Prefer exact name match first
+    if (name) {
+      const nameMatch = await this.companiesRepository
+        .createQueryBuilder('company')
+        .where('LOWER(company.name) = LOWER(:name)', { name })
+        .getOne();
+      if (nameMatch) {
+        return nameMatch;
+      }
     }
-
-    return queryBuilder.getOne();
+    // If no name match, try domain match
+    if (domain) {
+      return this.companiesRepository
+        .createQueryBuilder('company')
+        .where('LOWER(company.url) = LOWER(:domain)', { domain })
+        .getOne();
+    }
+    return null;
   }
 
   /**
