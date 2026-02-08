@@ -7,6 +7,8 @@ import { JobApplication } from '../job-applications/entities/job-application.ent
 import { UpdateCompanyDto } from './dtos/update-company.dto';
 import { ExceptionMessages } from '../../exceptions/exception-messages';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
+import { BrandfetchService } from './brandfetch.service';
+import { DomainValidationResultDto } from './dtos/validate-domain.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -15,6 +17,7 @@ export class CompaniesService {
     private readonly companiesRepository: Repository<Company>,
     @InjectRepository(JobApplication)
     private readonly jobApplicationsRepository: Repository<JobApplication>,
+    private readonly brandfetchService: BrandfetchService,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto, user: AuthUserDto) {
@@ -22,6 +25,30 @@ export class CompaniesService {
       await this.jobApplicationBelongsToUser(createCompanyDto.jobApplicationId, user.userId);
     }
 
+    // Check for existing company by name or domain
+    const existingCompany = await this.findByNameOrDomain(
+      createCompanyDto.name,
+      createCompanyDto.url,
+    );
+
+    if (existingCompany) {
+      // Company already exists, update it if we have newer data
+      let shouldSave = false;
+      if (createCompanyDto.url && !existingCompany.url) {
+        existingCompany.url = createCompanyDto.url;
+        shouldSave = true;
+      }
+      if (createCompanyDto.logo && !existingCompany.logo) {
+        existingCompany.logo = createCompanyDto.logo;
+        shouldSave = true;
+      }
+      if (shouldSave) {
+        await this.companiesRepository.save(existingCompany);
+      }
+      return existingCompany;
+    }
+
+    // Create new company
     const companyEntity = this.companiesRepository.create({
       ...createCompanyDto,
       ...(createCompanyDto?.jobApplicationId && {
@@ -29,9 +56,19 @@ export class CompaniesService {
       }),
     });
 
-    const { id: companyId } = await this.companiesRepository.save(companyEntity);
-
-    return this.findOne(companyId, user);
+    try {
+      const { id: companyId } = await this.companiesRepository.save(companyEntity);
+      return this.findOne(companyId, user);
+    } catch (error: any) {
+      // Handle unique constraint violation (race condition)
+      if (error.code === '23505') {
+        const existing = await this.findByNameOrDomain(createCompanyDto.name, createCompanyDto.url);
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
   }
 
   async findOne(companyId: string, { userId }: AuthUserDto) {
@@ -91,6 +128,42 @@ export class CompaniesService {
     const company = await this.findOne(companyId, user);
 
     return this.companiesRepository.remove(company);
+  }
+
+  /**
+   * Find company by name OR domain (case-insensitive)
+   * Used to check for duplicates before creating a new company
+   */
+  async findByNameOrDomain(name?: string, domain?: string): Promise<Company | null> {
+    if (!name && !domain) {
+      return null;
+    }
+
+    // Prefer exact name match first
+    if (name) {
+      const nameMatch = await this.companiesRepository
+        .createQueryBuilder('company')
+        .where('LOWER(company.name) = LOWER(:name)', { name })
+        .getOne();
+      if (nameMatch) {
+        return nameMatch;
+      }
+    }
+    // If no name match, try domain match
+    if (domain) {
+      return this.companiesRepository
+        .createQueryBuilder('company')
+        .where('LOWER(company.url) = LOWER(:domain)', { domain })
+        .getOne();
+    }
+    return null;
+  }
+
+  /**
+   * Validate domain ownership against Brandfetch API
+   */
+  async validateDomainOwnership(domain: string): Promise<DomainValidationResultDto> {
+    return this.brandfetchService.validateDomain(domain);
   }
 
   // Helpers

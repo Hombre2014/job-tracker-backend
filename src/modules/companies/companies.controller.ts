@@ -6,6 +6,8 @@ import { AuthUser } from '../auth/user.decorator';
 import { AuthUserDto } from '../auth/dtos/auth.user.dto';
 import { CompanyMapper } from './companies.mapper';
 import { CompanyNameDto } from './dtos/get-company-by-name.dto';
+import { FindCompanyDto } from './dtos/find-company.dto';
+import { ValidateDomainDto } from './dtos/validate-domain.dto';
 
 @Controller('companies')
 export class CompaniesController {
@@ -33,6 +35,17 @@ export class CompaniesController {
   @Get('/by-name')
   async getOneByName(@Body() { name }: CompanyNameDto) {
     return this.companiesService.getOneByName(name);
+  }
+
+  @Post('/find-by-name-or-domain')
+  async findByNameOrDomain(@Body() { name, domain }: FindCompanyDto) {
+    const company = await this.companiesService.findByNameOrDomain(name, domain);
+    return company ? this.mapper.toDto(company) : null;
+  }
+
+  @Post('/validate-domain')
+  async validateDomain(@Body() { domain }: ValidateDomainDto) {
+    return this.companiesService.validateDomainOwnership(domain);
   }
 
   @Get('/:id')

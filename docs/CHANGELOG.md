@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-08
+
+### Added - Logo Backfill & Integration
+
+- **Logo Column Migration**: Introduced a dedicated logo column in the database for storing high-quality company logos.
+- **Brandfetch Integration**: Implemented automated logo fetching from Brandfetch API with SSL verification and request timeouts.
+- **Backfill Script**: Added backfill-logos.ts script to restore and update company logos in bulk, including error handling and API key validation.
+- **Manual Logo Support**: Enabled manual logo overrides and reset functionality via backend endpoints.
+
+### Fixed
+
+- **Logo Rendering**: Fixed a bug where manual logos wouldn't display for companies without a valid domain name.
+- **API Key Validation**: Added early validation for missing Brandfetch API key to prevent unnecessary 401 errors.
+
+## [1.0.2] - 2026-02-07
+
+### Added - Company Deduplication System
+
+- **Duplicate Prevention Logic**: Implemented robust company deduplication based on name and domain
+  - **Constraints**: Added unique constraints to `name` and `url` columns in `companies` table
+  - **Service Logic**: `create` method now checks for existing companies by name or domain before creation
+  - **Domain Validation**: Added `findByNameOrDomain` and `validateDomainOwnership` methods
+  - **Case-Insensitive Matching**: All lookups use `LOWER()` for consistent matching
+  - **Files**: `src/modules/companies/companies.service.ts`, `src/modules/companies/entities/company.entity.ts`
+
+- **Brandfetch Integration**: Added service to validate domains and fetch company data
+  - **Service**: `BrandfetchService` communicates with Brandfetch API
+  - **Validation**: Verifies if a domain is registered and retrieves official company name/logo
+  - **Endpoints**: `POST /companies/find-by-name-or-domain`, `POST /companies/validate-domain`
+  - **Files**: `src/modules/companies/brandfetch.service.ts`, `src/modules/companies/companies.controller.ts`
+
+### Changed
+
+- **Company Creation Flow**:
+  - Requesting to create a company that already exists now returns the existing record instead of failing or creating a duplicate
+  - Updates existing company URL if a new valid URL is provided during "creation" of existing company
+
 ## [1.0.1] - 2026-01-25
 
 ### Fixed

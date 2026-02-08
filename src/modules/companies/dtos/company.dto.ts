@@ -8,6 +8,8 @@ export class CompanyDto extends BaseDto {
 
   url?: string;
 
+  logo?: string;
+
   industry?: string;
 
   jobApplications?: JobApplication[];
