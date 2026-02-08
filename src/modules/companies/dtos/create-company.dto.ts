@@ -14,6 +14,10 @@ export class CreateCompanyDto {
 
   @IsString()
   @IsOptional()
+  logo?: string;
+
+  @IsString()
+  @IsOptional()
   industry?: string;
 
   @IsUUID()

@@ -10,6 +10,7 @@ export class CompanyMapper {
     dto.name = entity.name;
     dto.description = entity.description;
     dto.url = entity.url;
+    dto.logo = entity.logo;
     dto.industry = entity.industry;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;

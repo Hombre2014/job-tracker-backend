@@ -9,13 +9,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { newGuid } from '../../utils/guid';
 import { Repository } from 'typeorm';
+import { BrandfetchService } from './brandfetch.service';
 
 describe('CompaniesService', () => {
   let repository: Repository<Company>;
   let jobApplicationRepository: Repository<JobApplication>;
   let service: CompaniesService;
+  let brandfetchService: BrandfetchService;
+  
   const validUserDto: AuthUserDto = { userId: newGuid(), email: 'user@example.com' };
-  const validCompany = { id: newGuid(), name: 'Test Company', jobApplications: [] } as Company;
+  const validCompany = { id: newGuid(), name: 'Test Company', url: 'test.com', jobApplications: [] } as Company;
+
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+  };
 
   beforeEach(async () => {
     const companiesRepositoryMock = {
@@ -27,10 +35,15 @@ describe('CompaniesService', () => {
       findOneByOrFail: jest.fn(),
       remove: jest.fn(),
       existsBy: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
     };
 
     const jobAppsRepositoryMock = {
       existsBy: jest.fn(),
+    };
+
+    const brandfetchServiceMock = {
+      validateDomain: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -38,12 +51,14 @@ describe('CompaniesService', () => {
         CompaniesService,
         { provide: getRepositoryToken(Company), useValue: companiesRepositoryMock },
         { provide: getRepositoryToken(JobApplication), useValue: jobAppsRepositoryMock },
+        { provide: BrandfetchService, useValue: brandfetchServiceMock },
       ],
     }).compile();
 
     service = module.get<CompaniesService>(CompaniesService);
     repository = module.get(getRepositoryToken(Company));
     jobApplicationRepository = module.get(getRepositoryToken(JobApplication));
+    brandfetchService = module.get<BrandfetchService>(BrandfetchService);
   });
 
   afterEach(() => {
@@ -53,6 +68,7 @@ describe('CompaniesService', () => {
   it('creates a company without jobApplicationId', async () => {
     // Arrange
     const dto = { name: 'Acme' } as CreateCompanyDto;
+    mockQueryBuilder.getOne.mockResolvedValue(null); // No existing company
     jest.spyOn(repository, 'create').mockReturnValue({ ...dto } as Company);
     jest.spyOn(repository, 'save').mockResolvedValue(validCompany);
     jest.spyOn(repository, 'findOne').mockResolvedValue(validCompany);
@@ -61,10 +77,52 @@ describe('CompaniesService', () => {
     const res = await service.create(dto, validUserDto);
 
     // Assert
+    expect(repository.createQueryBuilder).toHaveBeenCalled();
     expect(repository.create).toHaveBeenCalledWith({ ...dto });
     expect(repository.save).toHaveBeenCalled();
     expect(res).toEqual(validCompany);
     expect(jobApplicationRepository.existsBy).not.toHaveBeenCalled();
+  });
+
+  it('returns existing company if found by name or domain', async () => {
+    // Arrange
+    const dto = { name: 'Test Company', url: 'test.com' } as CreateCompanyDto;
+    mockQueryBuilder.getOne.mockResolvedValue(validCompany); // Found existing company
+
+    // Act
+    const res = await service.create(dto, validUserDto);
+
+    // Assert
+    expect(repository.createQueryBuilder).toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled(); // Should NOT create new
+    expect(res).toEqual(validCompany);
+  });
+
+  it('updates existing company url if different', async () => {
+    // Arrange
+    const dto = { name: 'Test Company', url: 'new-url.com' } as CreateCompanyDto;
+    const existingCompany = { ...validCompany, url: 'old-url.com' };
+    mockQueryBuilder.getOne.mockResolvedValue(existingCompany);
+    jest.spyOn(repository, 'save').mockResolvedValue({ ...existingCompany, url: 'new-url.com' });
+
+    // Act
+    const res = await service.create(dto, validUserDto);
+
+    // Assert
+    expect(repository.save).toHaveBeenCalledWith({ ...existingCompany, url: 'new-url.com' });
+    expect(res.url).toBe('new-url.com');
+  });
+
+  it('findByNameOrDomain constructs correct query', async () => {
+    // Act
+    await service.findByNameOrDomain('Test', 'test.com');
+
+    // Assert
+    expect(repository.createQueryBuilder).toHaveBeenCalledWith('company');
+    expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+      'LOWER(company.name) = LOWER(:name) OR LOWER(company.url) = LOWER(:domain)',
+      { name: 'Test', domain: 'test.com' },
+    );
   });
 
   it('throws when creating with jobApplicationId that does not belong to user', async () => {
