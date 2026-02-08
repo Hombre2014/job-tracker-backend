@@ -34,7 +34,10 @@ export class CompaniesService {
     if (existingCompany) {
       // Company already exists, update it if we have newer data
       let shouldSave = false;
-      if (createCompanyDto.url && createCompanyDto.url !== existingCompany.url) {
+      if (
+        createCompanyDto.url &&
+        createCompanyDto.url.toLowerCase() !== existingCompany.url?.toLowerCase()
+      ) {
         existingCompany.url = createCompanyDto.url;
         shouldSave = true;
       }
@@ -56,9 +59,19 @@ export class CompaniesService {
       }),
     });
 
-    const { id: companyId } = await this.companiesRepository.save(companyEntity);
-
-    return this.findOne(companyId, user);
+    try {
+      const { id: companyId } = await this.companiesRepository.save(companyEntity);
+      return this.findOne(companyId, user);
+    } catch (error: any) {
+      // Handle unique constraint violation (race condition)
+      if (error.code === '23505') {
+        const existing = await this.findByNameOrDomain(createCompanyDto.name, createCompanyDto.url);
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
   }
 
   async findOne(companyId: string, { userId }: AuthUserDto) {

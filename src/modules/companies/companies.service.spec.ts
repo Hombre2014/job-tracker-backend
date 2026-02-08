@@ -15,10 +15,14 @@ describe('CompaniesService', () => {
   let repository: Repository<Company>;
   let jobApplicationRepository: Repository<JobApplication>;
   let service: CompaniesService;
-  let brandfetchService: BrandfetchService;
-  
+
   const validUserDto: AuthUserDto = { userId: newGuid(), email: 'user@example.com' };
-  const validCompany = { id: newGuid(), name: 'Test Company', url: 'test.com', jobApplications: [] } as Company;
+  const validCompany = {
+    id: newGuid(),
+    name: 'Test Company',
+    url: 'test.com',
+    jobApplications: [],
+  } as Company;
 
   const mockQueryBuilder = {
     where: jest.fn().mockReturnThis(),
@@ -26,6 +30,8 @@ describe('CompaniesService', () => {
   };
 
   beforeEach(async () => {
+    mockQueryBuilder.where.mockClear();
+    mockQueryBuilder.getOne.mockReset();
     const companiesRepositoryMock = {
       create: jest.fn(),
       save: jest.fn(),
@@ -58,7 +64,7 @@ describe('CompaniesService', () => {
     service = module.get<CompaniesService>(CompaniesService);
     repository = module.get(getRepositoryToken(Company));
     jobApplicationRepository = module.get(getRepositoryToken(JobApplication));
-    brandfetchService = module.get<BrandfetchService>(BrandfetchService);
+    // brandfetchService is not used in tests
   });
 
   afterEach(() => {

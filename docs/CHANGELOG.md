@@ -7,21 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-02-08
 
-### Added - High-Quality Logo Restoration
-- **Dynamic Priority System**: Prioritized high-quality dynamic Brandfetch URLs as the default logo source.
-- **Manual Override & Reset**:
-  - **Edit Form**: Added "Reset to Automatic" button to quickly fix blurry or incorrect logos.
-  - **Autocomplete Sync**: Selecting a company from suggestions now automatically clears manual overrides to ensure high-quality defaults.
-- **Improved Display Logic**:
-  - **CompanyLogo**: Enhanced three-stage fallback (Manual -> Brandfetch Dynamic -> Generic Icon).
-  - **Quality Assurance**: Removed Google Favicon API to prevent low-quality favicon overrides.
-- **State Synchronization**:
-  - **Redux Propagation**: Added handlers to `jobsSlice` and `boardsSlice` to sync company updates across all job views.
-  - **LocalStorage Sync**: Immediate synchronization of `currentJobPost` on successful update.
+### Added - Logo Backfill & Integration
+
+- **Logo Column Migration**: Introduced a dedicated logo column in the database for storing high-quality company logos.
+- **Brandfetch Integration**: Implemented automated logo fetching from Brandfetch API with SSL verification and request timeouts.
+- **Backfill Script**: Added backfill-logos.ts script to restore and update company logos in bulk, including error handling and API key validation.
+- **Manual Logo Support**: Enabled manual logo overrides and reset functionality via backend endpoints.
+
 ### Fixed
 
-- **Logo Rendering**: Fixed a bug where manual logos wouldn't display for companies without a valid domain name
-- **Prop Propagation**: Added missing `logo` props to `CompanyLogo` calls in Job Hub and Job Header views
+- **Logo Rendering**: Fixed a bug where manual logos wouldn't display for companies without a valid domain name.
+- **API Key Validation**: Added early validation for missing Brandfetch API key to prevent unnecessary 401 errors.
 
 ## [1.0.2] - 2026-02-07
 

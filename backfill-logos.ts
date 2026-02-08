@@ -6,9 +6,10 @@ dotenv.config();
 
 /**
  * PRODUCTION LOGO BACKFILL SCRIPT
- * 
+ *
  * This script identifies companies missing logos or holding low-quality Google favicon URLs,
  * and attempts to fetch high-quality logos from Brandfetch or Clearbit.
+ *
  */
 
 const client = new Client({
@@ -17,12 +18,20 @@ const client = new Client({
   user: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'jobtracker_dev',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ssl:
+    process.env.DB_SSL === 'true'
+      ? { rejectUnauthorized: true, ca: process.env.DB_CA_CERT }
+      : false,
 });
 
 async function backfill() {
   try {
     console.log('--- Logo Backfill Process Started ---');
+
+    if (!process.env.BRANDFETCH_API_KEY) {
+      console.warn('⚠️ BRANDFETCH_API_KEY not set — Brandfetch lookups will be skipped.');
+    }
+
     console.log('Connecting to database...');
     await client.connect();
 
@@ -59,9 +68,12 @@ async function backfill() {
         console.log(`  Trying Brandfetch for ${domain}...`);
         const bfResponse = await axios.get(`https://api.brandfetch.io/v2/brands/${domain}`, {
           headers: { Authorization: `Bearer ${process.env.BRANDFETCH_API_KEY}` },
+          timeout: 10000,
         });
 
-        const icon = bfResponse.data?.logos?.find((l: any) => l.type === 'icon' || l.type === 'logo');
+        const icon = bfResponse.data?.logos?.find(
+          (l: any) => l.type === 'icon' || l.type === 'logo',
+        );
         if (icon?.formats?.[0]?.src) {
           foundLogo = icon.formats[0].src;
           console.log(`  ✅ Brandfetch found logo: ${foundLogo}`);
@@ -75,23 +87,26 @@ async function backfill() {
         try {
           console.log(`  Trying Clearbit fallback for ${domain}...`);
           const cbUrl = `https://logo.clearbit.com/${domain}`;
-          await axios.head(cbUrl); // Verify it exists
+          await axios.head(cbUrl, { timeout: 10000 }); // Verify it exists
           foundLogo = cbUrl;
           console.log(`  ✅ Clearbit found logo: ${foundLogo}`);
         } catch (err) {
-          console.log(`  ❌ Clearbit failed.`);
+          console.log(`  ❌ Clearbit failed: ${err?.message || err}`);
         }
       }
 
       if (foundLogo) {
-        await client.query('UPDATE "companies" SET "logo" = $1 WHERE id = $2', [foundLogo, company.id]);
+        await client.query('UPDATE "companies" SET "logo" = $1 WHERE id = $2', [
+          foundLogo,
+          company.id,
+        ]);
         console.log(`  ✨ Successfully updated database for ${company.name}.`);
       } else {
         console.log(`  ⚠️ No logo discovered for ${company.name}.`);
       }
 
       // Throttle slightly to respect API limits
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     console.log('\n--- Backfill Process Completed ---');
@@ -103,3 +118,7 @@ async function backfill() {
 }
 
 backfill();
+// Prefer top-level await
+(async () => {
+  await backfill();
+})();
