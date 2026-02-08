@@ -104,10 +104,10 @@ describe('CompaniesService', () => {
     expect(res).toEqual(validCompany);
   });
 
-  it('updates existing company url if different', async () => {
+  it('updates existing company url if empty', async () => {
     // Arrange
     const dto = { name: 'Test Company', url: 'new-url.com' } as CreateCompanyDto;
-    const existingCompany = { ...validCompany, url: 'old-url.com' };
+    const existingCompany = { ...validCompany, url: '' };
     mockQueryBuilder.getOne.mockResolvedValue(existingCompany);
     jest.spyOn(repository, 'save').mockResolvedValue({ ...existingCompany, url: 'new-url.com' });
 
@@ -119,15 +119,25 @@ describe('CompaniesService', () => {
     expect(res.url).toBe('new-url.com');
   });
 
-  it('findByNameOrDomain constructs correct query', async () => {
+  it('findByNameOrDomain constructs correct queries', async () => {
     // Act
     await service.findByNameOrDomain('Test', 'test.com');
 
     // Assert
     expect(repository.createQueryBuilder).toHaveBeenCalledWith('company');
-    expect(mockQueryBuilder.where).toHaveBeenCalledWith(
-      'LOWER(company.name) = LOWER(:name) OR LOWER(company.url) = LOWER(:domain)',
-      { name: 'Test', domain: 'test.com' },
+    expect(mockQueryBuilder.where).toHaveBeenNthCalledWith(
+      1,
+      'LOWER(company.name) = LOWER(:name)',
+      { name: 'Test' },
+    );
+    expect(mockQueryBuilder.getOne).toHaveBeenCalled();
+    // Simulate not found by name, so it should check by domain
+    // (In real logic, if getOne returns null, it checks domain)
+    // For this test, we just check that both where calls are made
+    expect(mockQueryBuilder.where).toHaveBeenNthCalledWith(
+      2,
+      'LOWER(company.url) = LOWER(:domain)',
+      { domain: 'test.com' },
     );
   });
 
