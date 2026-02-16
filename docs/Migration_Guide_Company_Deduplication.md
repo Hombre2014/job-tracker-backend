@@ -6,8 +6,8 @@ This release introduces strict unique constraints on company names and domains t
 
 ## Pre-Deployment Checklist
 
-1.  [ ] **Backup Database**: Create a full backup of the production database.
-2.  [ ] **Maintenance Window**: Schedule a short downtime window (est. 15-30 mins) as the migration will lock the `companies` table.
+1. [ ] **Backup Database**: Create a full backup of the production database.
+2. [ ] **Maintenance Window**: Schedule a short downtime window (est. 15-30 mins) as the migration will lock the `companies` table.
 
 ## Migration Steps
 
@@ -70,18 +70,20 @@ Deploy the frontend code. There are no breaking changes for the frontend, but it
 
 After deployment, verify the system:
 
-1.  Try to create a company with a name that already exists -> Should link to existing.
-2.  Try to create a company with a domain that already exists -> Should link to existing.
+1. Try to create a company with a name that already exists -> Should link to existing.
+2. Try to create a company with a domain that already exists -> Should link to existing.
 
 ## Rollback Plan
 
 If the migration fails or causes issues:
 
-1.  **Revert Migration:**
-    ```bash
-    yarn migration:revert
-    ```
-2.  **Redeploy Previous Version**: Rollback backend code to v1.0.1.
+1. **Revert Migration:**
+
+   ```bash
+   yarn migration:revert
+   ```
+
+2. **Redeploy Previous Version**: Rollback backend code to v1.0.1.
 
 ## Troubleshooting
 
