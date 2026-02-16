@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.1] - 2026-01-25
 
-### Fixed
+### Fixed - Password Reset Endpoints and Email Service
 
 - **Email Service Error Handling**: Enhanced email sending with proper error handling
   - **Issue**: Email service silently failed without throwing errors, causing API to return success even when emails weren't sent
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Impact**: Clear success responses for password reset operations
   - **Files**: `src/modules/users/users.controller.ts`
 
-### Changed
+### Changed - User Creation and Login
 
 - **Code Cleanup**: Removed debug console.log statements
   - **Removed**: Unnecessary profilePic logging in user creation
