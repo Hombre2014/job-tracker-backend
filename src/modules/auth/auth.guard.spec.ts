@@ -55,7 +55,7 @@ describe('AuthGuard', () => {
   it('throws UnauthorizedException when authorization header is missing', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
 
-    const request: any = { method: 'GET', headers: {} };
+    const request: any = { method: 'GET', cookies: {} };
     const ctx = makeExecutionContext(request);
 
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
@@ -64,7 +64,7 @@ describe('AuthGuard', () => {
   it('throws UnauthorizedException when authorization header is malformed', async () => {
     mockReflector.getAllAndOverride.mockReturnValue(false);
 
-    const request: any = { method: 'GET', headers: { authorization: 'Bad token' } };
+    const request: any = { method: 'GET', cookies: { accessToken: 'Bad token' } };
     const ctx = makeExecutionContext(request);
 
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
@@ -75,7 +75,7 @@ describe('AuthGuard', () => {
     mockConfigService.get.mockReturnValue('access-secret');
     mockJwtService.verifyAsync.mockRejectedValue(new Error('invalid'));
 
-    const request: any = { method: 'GET', headers: { authorization: 'Bearer some-token' } };
+    const request: any = { method: 'GET', cookies: { accessToken: 'some-token' } };
     const ctx = makeExecutionContext(request);
 
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
@@ -92,7 +92,7 @@ describe('AuthGuard', () => {
     const payload = { sub: 'user-123', email: 'me@example.com' };
     mockJwtService.verifyAsync.mockResolvedValue(payload);
 
-    const request: any = { method: 'GET', headers: { authorization: 'Bearer valid-token' } };
+    const request: any = { method: 'GET', cookies: { accessToken: 'valid-token' } };
     const ctx = makeExecutionContext(request);
 
     await expect(guard.canActivate(ctx)).resolves.toBe(true);

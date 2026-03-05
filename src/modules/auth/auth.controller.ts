@@ -18,6 +18,7 @@ import { VerificationProcess } from '../users/enums/verification-process.enum';
 import { ResetEmailDto } from '../users/dtos/reset-email.dto';
 import { ConfigService } from '@nestjs/config';
 import * as ms from 'ms';
+import { SignInResponseDto } from './dtos/sign-in-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,10 +30,11 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async signIn(@Body() signInDto: SignInDto, @Res() res: any) {
-    const tokens = await this.authService.signIn(signInDto.email, signInDto.password);
+  async signIn(@Body() signInDto: SignInDto, @Res() res: any): Promise<SignInResponseDto> {
+    const response = await this.authService.signIn(signInDto.email, signInDto.password);
+    const tokens = await this.authService.generateTokens(response.id, response.email);
     this.setTokensInCookies(res, tokens);
-    return res.status(HttpStatus.OK).json();
+    return res.status(HttpStatus.OK).json(response);
   }
 
   @Public()
