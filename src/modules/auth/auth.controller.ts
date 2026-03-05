@@ -31,7 +31,8 @@ export class AuthController {
   @Post('login')
   async signIn(@Body() signInDto: SignInDto, @Res() res: any) {
     const tokens = await this.authService.signIn(signInDto.email, signInDto.password);
-    return this.returnTokensInCookies(res, tokens);
+    this.setTokensInCookies(res, tokens);
+    return res.status(HttpStatus.OK).json();
   }
 
   @Public()
@@ -43,7 +44,7 @@ export class AuthController {
     }
 
     const tokens = await this.authService.refreshToken(token);
-    return this.returnTokensInCookies(res, tokens);
+    return this.setTokensInCookies(res, tokens);
   }
 
   @Get('profile')
@@ -71,7 +72,7 @@ export class AuthController {
     return this.authService.resetEmail(email, code, newEmail);
   }
 
-  private returnTokensInCookies(res: any, tokens: { accessToken: string; refreshToken: string }) {
+  private setTokensInCookies(res: any, tokens: { accessToken: string; refreshToken: string }) {
     const accessExpiration = this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h');
     const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d');
     const secure = this.configService.get('NODE_ENV') === 'production'; // only over HTTPS
@@ -90,7 +91,5 @@ export class AuthController {
       sameSite: 'strict',
       maxAge: ms(refreshExpiration),
     });
-
-    return res.status(HttpStatus.OK).json();
   }
 }
