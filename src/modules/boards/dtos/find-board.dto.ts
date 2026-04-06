@@ -4,4 +4,7 @@ export class FindBoardDto {
   @IsOptional()
   @IsString()
   name?: string;
+  @IsOptional()
+  @IsString()
+  include?: string;
 }

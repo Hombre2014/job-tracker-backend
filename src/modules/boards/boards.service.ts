@@ -48,12 +48,16 @@ export class BoardsService {
     }
 
     const boardName = query.name?.length > 0 ? Like(`%${query.name}%`) : null;
+    const requestedRelations = query.include?.split(',') || [];
+    const allowedRelations = ['columns'];
+    const relations = requestedRelations.filter((r) => allowedRelations.includes(r));
 
     return this.boardsRepository.find({
       where: {
         name: boardName,
         user: { id: userId },
       },
+      relations: relations,
       order: { createdAt: 'ASC' },
     });
   }
