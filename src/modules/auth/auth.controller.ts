@@ -37,6 +37,13 @@ export class AuthController {
     return res.status(HttpStatus.OK).json(response);
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  async signOut(@Res() res: any) {
+    this.clearTokensInCookies(res);
+    return res.status(HttpStatus.OK).json();
+  }
+
   @Public()
   @Post('refresh')
   async refreshToken(@Request() req: any, @Res() res: any) {
@@ -93,6 +100,24 @@ export class AuthController {
       secure: secure,
       sameSite: 'strict',
       maxAge: ms(refreshExpiration),
+    });
+  }
+
+  private clearTokensInCookies(res: any) {
+    const secure = this.configService.get('NODE_ENV') === 'production'; // only over HTTPS
+    res.cookie('accessToken', '', {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: new Date(0).getDate(),
+      path: '/',
+    });
+
+    res.cookie('refreshToken', '', {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: new Date(0).getDate(),
     });
   }
 }
