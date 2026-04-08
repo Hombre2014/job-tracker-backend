@@ -73,12 +73,19 @@ export class UsersService {
     const user = await this.findOneBy({ id });
 
     if (profilePic) {
+      await this.deleteUserCurrentProfilePicUrl(user);
       const { url: profilePicUrl } = await this.appwriteUploadsService.uploadFile(profilePic);
       dto.profilePicUrl = profilePicUrl;
     }
 
     Object.assign(user, dto);
     return this.usersRepository.save(user);
+  }
+
+  private deleteUserCurrentProfilePicUrl(user: User) {
+    if (user.profilePicUrl) {
+      return this.appwriteUploadsService.deleteFileByUrl(user.profilePicUrl);
+    }
   }
 
   async updateIsEmailVerified(body: EmailVerificationCodeDto) {
