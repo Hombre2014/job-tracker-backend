@@ -100,6 +100,7 @@ export class AuthController {
       secure: secure,
       sameSite: 'strict',
       maxAge: ms(refreshExpiration),
+      path: '/auth/refresh',
     });
   }
 
@@ -118,6 +119,7 @@ export class AuthController {
       secure: secure,
       sameSite: 'strict',
       maxAge: new Date(0).getDate(),
+      path: '/auth/refresh',
     });
   }
 }
