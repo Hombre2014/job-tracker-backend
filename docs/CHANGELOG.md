@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Request Body Size Limit**: Increased the JSON body size limit from the default 100kb to 10mb to prevent `413 Request Entity Too Large` errors when creating or editing notes with large rich-text (HTML) content.
   - **Root Cause**: NestJS/Express applies a 100kb default body parser limit with no explicit override configured.
-  - **Fix**: Disabled NestJS's built-in body parser (`bodyParser: false`) and registered a single authoritative `express.json({ limit: '10mb' })` parser to avoid middleware duplication.
+  - **Fix**: Disabled NestJS's built-in body parser (`bodyParser: false`) and registered explicit `express.json({ limit: '10mb' })` and `express.urlencoded({ limit: '10mb', extended: true })` parsers to avoid middleware duplication.
   - **Impact**: Notes (and all other endpoints) now accept request bodies up to 10mb; all existing functionality is unaffected.
   - **File**: `src/main.ts`
 
