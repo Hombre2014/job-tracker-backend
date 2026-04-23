@@ -9,7 +9,13 @@ import { CacheControlMiddleware } from './cache-control.middleware';
 const expressServer = express();
 
 const createNestServer = async (expressInstance: express.Express) => {
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance), {
+    bodyParser: false, // Disable default 100kb limit; we register our own below
+  });
+
+  // Allow up to 10mb for JSON bodies (needed for rich-text note content)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   app.enableCors({
     credentials: true,
