@@ -7,6 +7,7 @@ import {
   Get,
   Request,
   UnauthorizedException,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dtos/sign-in.dto';
@@ -15,27 +16,45 @@ import { AuthUser } from './user.decorator';
 import { AuthUserDto } from './dtos/auth.user.dto';
 import { VerificationProcess } from '../users/enums/verification-process.enum';
 import { ResetEmailDto } from '../users/dtos/reset-email.dto';
+import { ConfigService } from '@nestjs/config';
+import * as ms from 'ms';
+import { SignInResponseDto } from './dtos/sign-in-response.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(signInDto.email, signInDto.password);
+  async signIn(@Body() signInDto: SignInDto, @Res() res: any): Promise<SignInResponseDto> {
+    const response = await this.authService.signIn(signInDto.email, signInDto.password);
+    const tokens = await this.authService.generateTokens(response.id, response.email);
+    this.setTokensInCookies(res, tokens);
+    return res.status(HttpStatus.OK).json(response);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  async signOut(@Res() res: any) {
+    this.clearTokensInCookies(res);
+    return res.status(HttpStatus.OK).json();
   }
 
   @Public()
   @Post('refresh')
-  async refreshToken(@Request() req: any) {
-    const [type, token] = req.headers.authorization?.split(' ') ?? [];
-    if (type !== 'Bearer' || !token) {
+  async refreshToken(@Request() req: any, @Res() res: any) {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
       throw new UnauthorizedException();
     }
 
-    return this.authService.refreshToken(token);
+    const tokens = await this.authService.refreshToken(token);
+    this.setTokensInCookies(res, tokens);
+    return res.status(HttpStatus.OK).json();
   }
 
   @Get('profile')
@@ -61,5 +80,46 @@ export class AuthController {
     @Body() { code, email: newEmail }: ResetEmailDto,
   ) {
     return this.authService.resetEmail(email, code, newEmail);
+  }
+
+  private setTokensInCookies(res: any, tokens: { accessToken: string; refreshToken: string }) {
+    const accessExpiration = this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h');
+    const refreshExpiration = this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d');
+    const secure = this.configService.get('NODE_ENV') === 'production'; // only over HTTPS
+
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: ms(accessExpiration),
+      path: '/',
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: ms(refreshExpiration),
+      path: '/auth/refresh',
+    });
+  }
+
+  private clearTokensInCookies(res: any) {
+    const secure = this.configService.get('NODE_ENV') === 'production'; // only over HTTPS
+    res.cookie('accessToken', '', {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: new Date(0).getDate(),
+      path: '/',
+    });
+
+    res.cookie('refreshToken', '', {
+      httpOnly: true,
+      secure: secure,
+      sameSite: 'strict',
+      maxAge: new Date(0).getDate(),
+      path: '/auth/refresh',
+    });
   }
 }

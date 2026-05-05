@@ -4,6 +4,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CustomHttpException } from '../../exceptions/custom.exception';
 import { VerificationProcess } from '../users/enums/verification-process.enum';
+import { SignInResponseDto } from './dtos/sign-in-response.dto';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -101,15 +102,36 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(CustomHttpException);
     });
 
-    it('returns access and refresh tokens on success', async () => {
+    it('returns SignInResponseDto with a strong password on success', async () => {
       mockUsersService.findOneBy.mockResolvedValue(user);
       jest.spyOn(bcrypt as any, 'compare').mockResolvedValue(true);
 
+      const signInResponseDto = await service.signIn(user.email, 'very1Strong#Password!');
+
+      expect(signInResponseDto).toBeInstanceOf(SignInResponseDto)
+      expect(signInResponseDto).toHaveProperty('passwordStrength', 'strong');
+      expect(signInResponseDto).toHaveProperty('email', user.email);
+    });
+
+    it('returns SignInResponseDto with a weak password on success', async () => {
+      mockUsersService.findOneBy.mockResolvedValue(user);
+      jest.spyOn(bcrypt as any, 'compare').mockResolvedValue(true);
+
+      const signInResponseDto = await service.signIn(user.email, 'password');
+
+      expect(signInResponseDto).toBeInstanceOf(SignInResponseDto)
+      expect(signInResponseDto).toHaveProperty('passwordStrength', 'weak');
+      expect(signInResponseDto).toHaveProperty('email', user.email);
+    });
+  });
+
+  describe('generateTokens', () => {
+    it('returns access and refresh tokens on success', async () => {
       mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
 
-      const tokens = await service.signIn(user.email, 'password');
+      const tokens = await service.generateTokens('userId', user.email);
 
       expect(tokens).toHaveProperty('accessToken', 'access-token');
       expect(tokens).toHaveProperty('refreshToken', 'refresh-token');

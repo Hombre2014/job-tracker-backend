@@ -6,10 +6,6 @@ export class UserDto extends BaseDto {
   @IsEmail()
   email: string;
 
-  // @ApiProperty()
-  @IsString()
-  password: string;
-
   @IsEnum(UserRole)
   role: UserRoleType;
 

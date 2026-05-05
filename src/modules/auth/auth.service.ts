@@ -2,7 +2,6 @@ import * as bcrypt from 'bcrypt';
 import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { JwtTokensDto } from './dtos/jwt-tokens.dto';
 import { ConfigService } from '@nestjs/config';
 import { UserFriendlyErrorMessages } from '../../exceptions/user-friendly-error-messages';
 import { CustomHttpException } from '../../exceptions/custom.exception';
@@ -15,6 +14,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { isStrongPassword } from '../../utils/password-strength.util';
+import { SignInResponseDto } from './dtos/sign-in-response.dto';
+import { UserMapper } from '../users/users.mapper';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,7 @@ export class AuthService {
     private readonly userCodeVerificationService: UserCodeVerificationService,
   ) {}
 
-  async signIn(email: string, password: string): Promise<any> {
+  async signIn(email: string, password: string): Promise<SignInResponseDto> {
     const user = await this.usersService.findOneBy({ email });
     if (!user) {
       throw new UnauthorizedException();
@@ -48,7 +49,10 @@ export class AuthService {
     // Check password strength (using plain-text password before it's hashed)
     const passwordStrength = isStrongPassword(password) ? 'strong' : 'weak';
 
-    return await this.generateTokens(user.id, user.email, passwordStrength);
+    const mapper = new UserMapper();
+    const signInResponseDto = new SignInResponseDto(mapper.toDto(user), passwordStrength);
+
+    return signInResponseDto;
   }
 
   async refreshToken(token: string): Promise<any> {
@@ -65,24 +69,18 @@ export class AuthService {
     return this.generateTokens(payload.sub, payload.email);
   }
 
-  private async generateTokens(
-    userId: string,
-    email: string,
-    passwordStrength?: 'strong' | 'weak',
-  ) {
+  async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email: email };
 
-    return new JwtTokensDto({
-      accessToken: await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_ACCESS_TOKEN'),
-        expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h'),
-      }),
-      refreshToken: await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_REFRESH_TOKEN'),
-        expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d'),
-      }),
-      passwordStrength,
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('JWT_ACCESS_TOKEN'),
+      expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME', '1h'),
     });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('JWT_REFRESH_TOKEN'),
+      expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME', '7d'),
+    });
+    return { accessToken, refreshToken };
   }
 
   async resetEmail(email: string, code: string, newEmail: string) {
